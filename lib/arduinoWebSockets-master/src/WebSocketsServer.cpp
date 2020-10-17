@@ -26,10 +26,13 @@
 #include "WebSocketsServer.h"
 
 WebSocketsServer::WebSocketsServer(uint16_t port, String origin, String protocol) {
-    _port     = port;
-    _origin   = origin;
-    _protocol = protocol;
-    _runnning = false;
+    _port                   = port;
+    _origin                 = origin;
+    _protocol               = protocol;
+    _runnning               = false;
+    _pingInterval           = 0;
+    _pongTimeout            = 0;
+    _disconnectTimeoutCount = 0;
 
     _server = new WEBSOCKETS_NETWORK_SERVER_CLASS(port);
 
@@ -91,6 +94,10 @@ void WebSocketsServer::begin(void) {
 #if(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266_ASYNC)
         client->cHttpLine = "";
 #endif
+
+        client->pingInterval           = _pingInterval;
+        client->pongTimeout            = _pongTimeout;
+        client->disconnectTimeoutCount = _disconnectTimeoutCount;
     }
 
 #ifdef ESP8266
@@ -128,7 +135,9 @@ void WebSocketsServer::close(void) {
  */
 void WebSocketsServer::loop(void) {
     if(_runnning) {
+        WEBSOCKETS_YIELD();
         handleNewClients();
+        WEBSOCKETS_YIELD();
         handleClientData();
     }
 }
@@ -224,9 +233,7 @@ bool WebSocketsServer::broadcastTXT(uint8_t * payload, size_t length, bool heade
                 ret = false;
             }
         }
-#if(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266)
-        delay(0);
-#endif
+        WEBSOCKETS_YIELD();
     }
     return ret;
 }
@@ -287,9 +294,7 @@ bool WebSocketsServer::broadcastBIN(uint8_t * payload, size_t length, bool heade
                 ret = false;
             }
         }
-#if(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266)
-        delay(0);
-#endif
+        WEBSOCKETS_YIELD();
     }
     return ret;
 }
@@ -336,9 +341,7 @@ bool WebSocketsServer::broadcastPing(uint8_t * payload, size_t length) {
                 ret = false;
             }
         }
-#if(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266)
-        delay(0);
-#endif
+        WEBSOCKETS_YIELD();
     }
     return ret;
 }
@@ -416,6 +419,18 @@ int WebSocketsServer::connectedClients(bool ping) {
     return count;
 }
 
+/**
+ * see if one client is connected
+ * @param num uint8_t client id
+ */
+bool WebSocketsServer::clientIsConnected(uint8_t num) {
+     if(num >= WEBSOCKETS_SERVER_CLIENT_MAX) {
+        return false;
+    }
+    WSclient_t * client = &_clients[num];
+    return clientIsConnected(client);
+}
+
 #if(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266) || (WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266_ASYNC) || (WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP32)
 /**
  * get an IP for a client
@@ -485,6 +500,12 @@ bool WebSocketsServer::newClient(WEBSOCKETS_NETWORK_CLASS * TCPclient) {
 
             client->tcp->readStringUntil('\n', &(client->cHttpLine), std::bind(&WebSocketsServer::handleHeader, this, client, &(client->cHttpLine)));
 #endif
+
+            client->pingInterval           = _pingInterval;
+            client->pongTimeout            = _pongTimeout;
+            client->disconnectTimeoutCount = _disconnectTimeoutCount;
+            client->lastPing               = millis();
+            client->pongReceived           = false;
 
             return true;
             break;
@@ -647,8 +668,8 @@ void WebSocketsServer::handleNewClients(void) {
             tcpClient->stop();
         }
 
+        WEBSOCKETS_YIELD();
 #if(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266) || (WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP32)
-        delay(0);
     }
 #endif
 }
@@ -677,10 +698,11 @@ void WebSocketsServer::handleClientData(void) {
                         break;
                 }
             }
+
+            handleHBPing(client);
+            handleHBTimeout(client);
         }
-#if(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266)
-        delay(0);
-#endif
+        WEBSOCKETS_YIELD();
     }
 }
 #endif
@@ -852,5 +874,52 @@ void WebSocketsServer::handleHeader(WSclient_t * client, String * headerLine) {
         } else {
             handleNonWebsocketConnection(client);
         }
+    }
+}
+
+/**
+ * send heartbeat ping to server in set intervals
+ */
+void WebSocketsServer::handleHBPing(WSclient_t * client) {
+    if(client->pingInterval == 0)
+        return;
+    uint32_t pi = millis() - client->lastPing;
+    if(pi > client->pingInterval) {
+        DEBUG_WEBSOCKETS("[WS-Server][%d] sending HB ping\n", client->num);
+        if(sendPing(client->num)) {
+            client->lastPing     = millis();
+            client->pongReceived = false;
+        }
+    }
+}
+
+/**
+ * enable ping/pong heartbeat process
+ * @param pingInterval uint32_t how often ping will be sent
+ * @param pongTimeout uint32_t millis after which pong should timout if not received
+ * @param disconnectTimeoutCount uint8_t how many timeouts before disconnect, 0=> do not disconnect
+ */
+void WebSocketsServer::enableHeartbeat(uint32_t pingInterval, uint32_t pongTimeout, uint8_t disconnectTimeoutCount) {
+    _pingInterval           = pingInterval;
+    _pongTimeout            = pongTimeout;
+    _disconnectTimeoutCount = disconnectTimeoutCount;
+
+    WSclient_t * client;
+    for(uint8_t i = 0; i < WEBSOCKETS_SERVER_CLIENT_MAX; i++) {
+        client = &_clients[i];
+        WebSockets::enableHeartbeat(client, pingInterval, pongTimeout, disconnectTimeoutCount);
+    }
+}
+
+/**
+ * disable ping/pong heartbeat process
+ */
+void WebSocketsServer::disableHeartbeat() {
+    _pingInterval = 0;
+
+    WSclient_t * client;
+    for(uint8_t i = 0; i < WEBSOCKETS_SERVER_CLIENT_MAX; i++) {
+        client               = &_clients[i];
+        client->pingInterval = 0;
     }
 }

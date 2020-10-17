@@ -39,7 +39,14 @@ extern "C" {
 #ifdef ESP8266
 #include <Hash.h>
 #elif defined(ESP32)
+#include <esp_system.h>
+
+#if ESP_IDF_VERSION_MAJOR >= 4
+#include <esp32/sha.h>
+#else
 #include <hwcrypto/sha.h>
+#endif
+
 #else
 
 extern "C" {
@@ -595,7 +602,7 @@ bool WebSockets::readCb(WSclient_t * client, uint8_t * out, size_t n, WSreadWait
 
 #else
     unsigned long t = millis();
-    size_t len;
+    ssize_t len;
     DEBUG_WEBSOCKETS("[readCb] n: %zu t: %lu\n", n, t);
     while(n > 0) {
         if(client->tcp == NULL) {
@@ -623,14 +630,12 @@ bool WebSockets::readCb(WSclient_t * client, uint8_t * out, size_t n, WSreadWait
         }
 
         if(!client->tcp->available()) {
-#if(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266)
-            delay(0);
-#endif
+            WEBSOCKETS_YIELD();
             continue;
         }
 
         len = client->tcp->read((uint8_t *)out, n);
-        if(len) {
+        if(len > 0) {
             t = millis();
             out += len;
             n -= len;
@@ -638,13 +643,12 @@ bool WebSockets::readCb(WSclient_t * client, uint8_t * out, size_t n, WSreadWait
         } else {
             //DEBUG_WEBSOCKETS("Receive %d left %d!\n", len, n);
         }
-#if(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266)
-        delay(0);
-#endif
+        WEBSOCKETS_YIELD();
     }
     if(cb) {
         cb(client, true);
     }
+    WEBSOCKETS_YIELD();
 #endif
     return true;
 }
@@ -691,10 +695,9 @@ size_t WebSockets::write(WSclient_t * client, uint8_t * out, size_t n) {
         } else {
             //DEBUG_WEBSOCKETS("write %d failed left %d!\n", len, n);
         }
-#if(WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266)
-        delay(0);
-#endif
+        WEBSOCKETS_YIELD();
     }
+    WEBSOCKETS_YIELD();
     return total;
 }
 

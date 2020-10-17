@@ -4,21 +4,28 @@
 /*                                             */
 /***********************************************/
 
-/***************************** Defines *****************************/
-/***************************** Defines *****************************/
-
 /***************************** Includes *****************************/
 #include <Global.h>
 #include <cacharro.h>
 /***************************** Includes *****************************/
 
+/***************************** Defines *****************************/
+#define ESP32CAM
+
+#if defined(ESP32CAM)
+//  #define LED_BUILTIN                 33 //GPIO del led de la placa en los ESP32-CAM   
+  const int LED_BUILTIN=33;
+  const boolean ENCENDIDO=LOW;
+  const boolean APAGADO=HIGH;
+#else
+//  #define LED_BUILTIN                2 //GPIO del led de la placa en los ESP32   
+  const int LED_BUILTIN=4;//2;
+  const boolean ENCENDIDO=HIGH;
+  const boolean APAGADO=LOW;
+#endif
+/***************************** Defines *****************************/
+
 cacharroClass::cacharroClass() {}
-
-int cacharroClass::getNivelActivo(void) {return nivelActivo;};
-void cacharroClass::setNivelActivo(int nivel) {nivelActivo=nivel;};
-
-String cacharroClass::getNombreDispositivo(void) {return nombre_dispositivo;};
-void cacharroClass::setNombreDispositivo(String nombre) {nombre_dispositivo=nombre;};
 
 /********************************** Funciones de configuracion global **************************************/
 /************************************************/
@@ -112,5 +119,25 @@ String cacharroClass::generaJsonConfiguracionNivelActivo(String configActual, in
 
   return salida;  
   }  
+
+
+/********************************** Funciones de LED **************************************/
+void cacharroClass::configuraLed(void){pinMode(LED_BUILTIN, OUTPUT);}
+void cacharroClass::enciendeLed(void){digitalWrite(LED_BUILTIN, ENCENDIDO);}
+void cacharroClass::apagaLed(void){digitalWrite(LED_BUILTIN, APAGADO);}
+void cacharroClass::parpadeaLed(uint8_t veces, uint16_t delayed)
+  {
+  for(uint8_t i=0;i<2*veces;i++)
+    {  
+    delay(delayed);
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    }
+  }
+void cacharroClass::parpadeaLed(uint8_t veces)
+  {
+  parpadeaLed(veces,100);
+  }
+/********************************** Funciones de LED **************************************/
+
 
 cacharroClass cacharro;

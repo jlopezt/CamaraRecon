@@ -7,8 +7,7 @@
  */
  
 /***************************** Defines *****************************/
-#define MAX_VUELTAS      UINT16_MAX // 65535 
-#define LED_BUILTIN               4 //GPIO del led de la placa en los ESP32-CAM   
+//#define MAX_VUELTAS      UINT16_MAX // 65535 
 
 // Una vuela de loop son ANCHO_INTERVALO segundos 
 #define ANCHO_INTERVALO                 100 //Ancho en milisegundos de la rodaja de tiempo
@@ -37,24 +36,10 @@
 /***************************** Includes *****************************/
 
 /***************************** variables globales *****************************/
-uint16_t vuelta = MAX_VUELTAS-100;//0; //vueltas de loop
+//uint16_t vuelta = MAX_VUELTAS-100;//0; //vueltas de loop
 int debugGlobal=0; //por defecto desabilitado
 boolean trazaMemoria=false;
 /***************************** variables globales *****************************/
-
-/************************* FUNCIONES PARA EL BUITIN LED ***************************/
-void configuraLed(void){pinMode(LED_BUILTIN, OUTPUT);}
-void enciendeLed(void){digitalWrite(LED_BUILTIN, HIGH);}
-void apagaLed(void){digitalWrite(LED_BUILTIN, LOW);}
-void parpadeaLed(uint8_t veces, uint16_t delayed=100)
-  {
-  for(uint8_t i=0;i<2*veces;i++)
-    {  
-    delay(delayed);
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    }
-  }
-/***********************************************************************************/  
 
 /*************************************** SETUP ***************************************/      
 void setup()
@@ -62,8 +47,8 @@ void setup()
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector  
 
   Serial.begin(115200);
-  configuraLed();
-  enciendeLed();
+  cacharro.configuraLed();
+  cacharro.enciendeLed();
    
   Serial.printf("\n\n\n");
   Serial.printf("*************** %s ***************\n",NOMBRE_FAMILIA);
@@ -74,6 +59,12 @@ void setup()
   Serial.println("*                                                             *");
   Serial.println("***************************************************************");
 
+/*
+  Serial.printf("\n\nInit Pantalla TFT------------------------------------------------------------------\n");
+  //Ficheros - Lo primero para poder leer los demas ficheros de configuracion  
+  if(!inicializaTFT())Serial.println("Error al inicializar el sistema de ficheros");
+*/
+
   Serial.printf("\n\nInit Ficheros ---------------------------------------------------------------------\n");
   //Ficheros - Lo primero para poder leer los demas ficheros de configuracion
   if(!SistemaFicheros.inicializaFicheros(debugGlobal))Serial.println("Error al inicializar el sistema de ficheros");
@@ -81,13 +72,13 @@ void setup()
   //Configuracion general
   Serial.printf("\n\nInit General --------------------------------------------------------------------------\n");
   cacharro.inicializaConfiguracion(debugGlobal);
-  parpadeaLed(1);
+  cacharro.parpadeaLed(1);
 
   //Wifi
   Serial.println("\n\nInit WiFi ---------------------------------------------------------------------------\n");
   if (RedWifi.inicializaWifi(1))//debugGlobal)) No tiene sentido debugGlobal, no hay manera de activarlo
     {
-    parpadeaLed(2);
+    cacharro.parpadeaLed(2);
     /*----------------Inicializaciones que necesitan red-------------*/
     //OTA
     Serial.println("\n\nInit OTA ----------------------------------------------------------------------------\n");
@@ -106,8 +97,8 @@ void setup()
     ftpSrv.inicializaFTP(0);
     }
   else Serial.println("No se pudo conectar al WiFi");
-  parpadeaLed(1);
-  apagaLed();
+  cacharro.parpadeaLed(1);
+  cacharro.apagaLed();
 
   //Entradas
   Serial.println("\n\nInit entradas ----------------------------------------------------------------------\n");
@@ -133,8 +124,8 @@ void setup()
   Serial.println("\n\nInit Ordenes -----------------------------------------------------------------------\n");  
   Ordenes.inicializaOrden();//Inicializa los buffers de recepcion de ordenes desde PC
 
-  parpadeaLed(1,500);
-  apagaLed();//Por si acaso...
+  cacharro.parpadeaLed(1,500);
+  cacharro.apagaLed();//Por si acaso...
   
   Serial.printf("\n\n");
   Serial.println("***************************************************************");
@@ -156,25 +147,26 @@ void loop()
   //------------- EJECUCION DE TAREAS --------------------------------------
   //Acciones a realizar en el bucle   
   //Prioridad 0: OTA es prioritario.
-  if ((vuelta % FRECUENCIA_OTA)==0) gestionaOTA(); //Gestion de actualizacion OTA
+  if ((cacharro.getVuelta() % FRECUENCIA_OTA)==0) gestionaOTA(); //Gestion de actualizacion OTA
   //Prioridad 2: Funciones de control.
-  if ((vuelta % FRECUENCIA_RECONOCIMIENTO_FACIAL)==0) reconocimientoFacial(debugGlobal); //atiende el servidor web
-  if ((vuelta % FRECUENCIA_ENTRADAS)==0) Entradas.consultaEntradas(debugGlobal); //comprueba las entradas
-  if ((vuelta % FRECUENCIA_SALIDAS)==0) Salidas.actualizaSalidas(debugGlobal); //comprueba las salidas
+  if ((cacharro.getVuelta() % FRECUENCIA_RECONOCIMIENTO_FACIAL)==0) reconocimientoFacial(debugGlobal); //atiende el servidor web
+  if ((cacharro.getVuelta() % FRECUENCIA_ENTRADAS)==0) Entradas.consultaEntradas(debugGlobal); //comprueba las entradas
+  if ((cacharro.getVuelta() % FRECUENCIA_SALIDAS)==0) Salidas.actualizaSalidas(debugGlobal); //comprueba las salidas
   //Prioridad 3: Interfaces externos de consulta    
-  if ((vuelta % FRECUENCIA_SERVIDOR_WEB)==0) webServer(debugGlobal); //atiende el servidor web
-  if ((vuelta % FRECUENCIA_SERVIDOR_FTP)==0) ftpSrv.handleFTP(); //atiende el servidor ftp
-  if ((vuelta % FRECUENCIA_SERVIDOR_WEBSOCKET)==0) atiendeWebsocket();
-  if ((vuelta % FRECUENCIA_MQTT)==0) miMQTT.atiendeMQTT(debugGlobal);      
-  if ((vuelta % FRECUENCIA_ENVIO_DATOS)==0) miMQTT.enviaDatos(debugGlobal); //publica via MQTT los datos de entradas y salidas, segun configuracion
-  if ((vuelta % FRECUENCIA_ORDENES)==0) Ordenes.gestionaOrdenes(debugGlobal); //Lee ordenes via serie
+  if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_WEB)==0) webServer(debugGlobal); //atiende el servidor web
+  if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_FTP)==0) ftpSrv.handleFTP(); //atiende el servidor ftp
+  if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_WEBSOCKET)==0) atiendeWebsocket();
+  if ((cacharro.getVuelta() % FRECUENCIA_MQTT)==0) miMQTT.atiendeMQTT(debugGlobal);      
+  if ((cacharro.getVuelta() % FRECUENCIA_ENVIO_DATOS)==0) miMQTT.enviaDatos(debugGlobal); //publica via MQTT los datos de entradas y salidas, segun configuracion
+  if ((cacharro.getVuelta() % FRECUENCIA_ORDENES)==0) Ordenes.gestionaOrdenes(debugGlobal); //Lee ordenes via serie
+//  if ((cacharro.getVuelta() % FRECUENCIA_ORDENES)==0) atiendeTFT();
   //------------- FIN EJECUCION DE TAREAS ---------------------------------  
 
   //sumo una vuelta de loop, si desborda inicializo vueltas a cero
-  vuelta++;//sumo una vuelta de loop  
+  cacharro.incrementaVuelta();//sumo una vuelta de loop  
 
   //pinto la memoria libre    
-  if(trazaMemoria)  Serial.printf("Vuelta: %i| freeMem: actual %i | minima: %i\n",vuelta,esp_get_free_heap_size(),esp_get_minimum_free_heap_size());
+  if(trazaMemoria)  Serial.printf("Vuelta: %i| freeMem: actual %i | minima: %i\n",cacharro.getVuelta(),esp_get_free_heap_size(),esp_get_minimum_free_heap_size());
 
   //Espero hasta el final de la rodaja de tiempo
   while(millis()<EntradaBucle+ANCHO_INTERVALO)

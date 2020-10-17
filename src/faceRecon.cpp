@@ -261,6 +261,8 @@ boolean parseaConfiguracionCaras(String contenido)
 
   //Inicializo la lista de caras con el contador y el numero de confirmaciones
   uint8_t count=caras.size();
+  Serial.printf("Se cargaran %i caras\n", count);
+
   face_id_name_init(&st_face_list, count, confirm_times);
 
   for(uint8_t i=0;i<count;i++)
