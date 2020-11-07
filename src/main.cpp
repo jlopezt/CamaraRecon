@@ -18,7 +18,7 @@
 #define FRECUENCIA_SECUENCIADOR          10 //cada cuantas vueltas de loop atiende al secuenciador
 #define FRECUENCIA_SERVIDOR_WEB           5 //cada cuantas vueltas de loop atiende el servidor web
 #define FRECUENCIA_SERVIDOR_WEBSOCKET     1 //cada cuantas vueltas de loop atiende el servidor web
-#define FRECUENCIA_SERVIDOR_FTP           5 //cada cuantas vueltas de loop atiende el servidor ftp
+#define FRECUENCIA_SERVIDOR_FTP           3 //cada cuantas vueltas de loop atiende el servidor ftp
 #define FRECUENCIA_MQTT                  10 //cada cuantas vueltas de loop envia y lee del broker MQTT
 #define FRECUENCIA_ENVIO_DATOS           50 //cada cuantas vueltas de loop envia al broker el estado de E/S
 #define FRECUENCIA_ORDENES                2 //cada cuantas vueltas de loop atiende las ordenes via serie 

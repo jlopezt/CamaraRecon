@@ -63,8 +63,9 @@ boolean FtpServer::inicializaFTP(boolean debug)
   else
     {
     Serial.printf("Servidor FTP:\nusuario: %s\nPassword: %s\n",usuario.c_str(), password.c_str());  
-    begin(usuario, password);
+    //begin(usuario, password);
     }
+  begin(usuario, password);  
   return true;  
   }
 

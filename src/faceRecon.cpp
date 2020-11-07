@@ -21,6 +21,16 @@
 #define FACE_COLOR_CYAN   (FACE_COLOR_BLUE | FACE_COLOR_GREEN)
 #define FACE_COLOR_PURPLE (FACE_COLOR_BLUE | FACE_COLOR_RED)
 
+/* 
+#define CAMARA_KO 0
+#define RECONOCIMIENTO_NO_ACTIVO 1
+#define CARA_RECONOCIDA 2
+#define CARA_NO_RECONOCIDA 3
+#define NO_HAY_CARA 4
+#define CAPTURANDO_CARA 5 
+#define CARA_CAPTURADA 6
+*/
+
 //Streamming
 #define PART_BOUNDARY "123456789000000000000987654321"
 //Configuracion del puerto para streaming
@@ -131,6 +141,29 @@ httpd_resp_value st_name;
 
 unsigned long intervaloReconocimiento=0;
 boolean reconocerCaras=true;
+
+typedef enum 
+  {
+  CAMARA_KO,
+  RECONOCIMIENTO_NO_ACTIVO,
+  NO_HAY_CARA,
+  CARA_NO_RECONOCIDA,
+  CARA_RECONOCIDA,
+  CAPTURANDO_CARA,
+  CARA_CAPTURADA
+  }estadosReconocimiento_t;
+estadosReconocimiento_t estadoReconocimiento=CAMARA_KO;
+
+String mensajesWS[]=
+  {
+  "Camara no disponible",
+  "Reconocimiento facial desactivado",
+  "No hay cara",
+  "Cara no reconocida",
+  "Cara reconocida",
+  "Capturando cara, paso",
+  "Cara capturada"
+  };
 /********************************************************************************************************/
 //Prototipos de funciones
 boolean recuperaDatosCaras(boolean debug);
@@ -208,7 +241,16 @@ boolean parseaConfiguracionCaras(String contenido)
   uint8_t confirm_times=ENROLL_CONFIRM_TIMES;
   if (json.containsKey("confirm_times")) confirm_times=json["confirm_times"]; 
   if (json.containsKey("intervaloReconocimiento")) intervaloReconocimiento=json["intervaloReconocimiento"]; 
-  
+
+  //mensajes a mostrar en al web
+  if (json.containsKey("mensaje_CAMARA_KO"))  mensajesWS[CAMARA_KO]=json.get<String>("mensaje_CAMARA_KO"); 
+  if (json.containsKey("mensaje_RECONOCIMIENTO_NO_ACTIVO"))  mensajesWS[RECONOCIMIENTO_NO_ACTIVO]=json.get<String>("mensaje_RECONOCIMIENTO_NO_ACTIVO"); 
+  if (json.containsKey("mensaje_NO_HAY_CARA"))  mensajesWS[NO_HAY_CARA]=json.get<String>("mensaje_NO_HAY_CARA"); 
+  if (json.containsKey("mensaje_CARA_NO_RECONOCIDA"))  mensajesWS[CARA_NO_RECONOCIDA]=json.get<String>("mensaje_CARA_NO_RECONOCIDA"); 
+  if (json.containsKey("mensaje_CARA_RECONOCIDA"))  mensajesWS[CARA_RECONOCIDA]=json.get<String>("mensaje_CARA_RECONOCIDA"); 
+  if (json.containsKey("mensaje_CAPTURANDO_CARA"))  mensajesWS[CAPTURANDO_CARA]=json.get<String>("mensaje_CAPTURANDO_CARA"); 
+  if (json.containsKey("mensaje_CARA_CAPTURADA"))  mensajesWS[CARA_CAPTURADA]=json.get<String>("mensaje_CARA_CAPTURADA"); 
+
   //Configuracion de la camara
   int8_t valor=0;
   if (json.containsKey("hmirror"))
@@ -484,6 +526,7 @@ void activaRecon(boolean activar)
 /*                                                    */
 /* Envia el mensaje de cara reconocida mediante MQTT  */ 
 /* boolean enviarMQTT(String topic, String payload);  */
+/*                                                    */
 /******************************************************/
 int caraReconocida(String nombre)
   {
@@ -526,18 +569,28 @@ int caraReconocida(String nombre)
 /**********************************************************/
 void reconocimientoFacial(boolean debug) 
   {    
+  String mensajeWS="";
+
   if(debug) Serial.printf("*************Reconocimiento facial*****************\n");  
   if(debug) Serial.printf("Ejecutadose en el core %i\n",xPortGetCoreID());
 
+  estadosReconocimiento_t estadoReconocimientoAnterior=estadoReconocimiento;//Guardo el anterior para comparar despues si ha cambiado
+  estadoReconocimiento=CAMARA_KO;//Empiezo por aqui
+
   fb = esp_camera_fb_get();
+
   if (fb!=NULL)
     {
+    estadoReconocimiento=RECONOCIMIENTO_NO_ACTIVO;
+
     if(debug) Serial.printf("Imagen leida de la camara\n");
     dl_matrix3du_t *image_matrix =  dl_matrix3du_alloc(1, fb->width, fb->height, 3);//dl_matrix3du_alloc(1, 320, 240, 3); //NO GESTIONO QUE SEA NULL
     if(!image_matrix) Serial.printf("AAAArrrrrrgggggghhhh!!!!!!!!!!!!!!!!!!");
     /**************************INICIO RECONOCER CARA*********************/
     if(reconocerCaras)
       {
+      estadoReconocimiento=NO_HAY_CARA;
+
       if(debug) Serial.printf("Convierte la imagen\n");
 
       fmt2rgb888(fb->buf, fb->len, fb->format, image_matrix->item); //NO GESTIONO EL KO!!! 
@@ -549,24 +602,36 @@ void reconocimientoFacial(boolean debug)
         if (align_face(net_boxes_x, image_matrix, aligned_face) == ESP_OK)
           {
           //Se ha detectado una cara
+          estadoReconocimiento=CARA_NO_RECONOCIDA;
+
           if(debug) Serial.printf("Hay una cara\n");
 
           dl_matrix3d_t *face_id_x = get_face_id(aligned_face);
 
           if (g_state == START_ENROLL)
             {
+            estadoReconocimiento=CAPTURANDO_CARA;  
             int left_sample_face = enroll_face_id_to_flash_with_name(&st_face_list, face_id_x, st_name.enroll_name);
+            
+            mensajeWS=" " + String(ENROLL_CONFIRM_TIMES - left_sample_face);
+            /*
             char enrolling_message[64];
             sprintf(enrolling_message, "SAMPLE NUMBER %d FOR %s", ENROLL_CONFIRM_TIMES - left_sample_face, st_name.enroll_name);
             enviarWSTXT(enrolling_message);
+            */
 
             if (left_sample_face == 0)
               {
+              estadoReconocimiento=CARA_CAPTURADA;
+
               ESP_LOGI(TAG, "Enrolled Face ID: %s", st_face_list.tail->id_name);
               g_state = START_STREAM;
+              mensajeWS="nombre: " + String(st_face_list.tail->id_name);
+              /*
               char captured_message[64];
               sprintf(captured_message, "FACE CAPTURED FOR %s", st_face_list.tail->id_name);
               enviarWSTXT(captured_message);
+              */
               send_face_list();
               }
             }
@@ -578,16 +643,20 @@ void reconocimientoFacial(boolean debug)
               if (f)
                 {
                 //cara reconocida
-                String cad="Reconocido: "+ String(f->id_name);  
+                estadoReconocimiento=CARA_RECONOCIDA;
+                mensajeWS=": "+ String(f->id_name);
+                String cad="Reconocido: "+ String(f->id_name);
                 if(debug) Serial.printf("%s\n", cad.c_str());
-                enviarWSTXT(cad);
+                /*enviarWSTXT(cad);*/
                 caraReconocida(f->id_name);
                 }
               else
                 {
                 //cara no reconocida 
+                estadoReconocimiento=CARA_NO_RECONOCIDA;
+
                 if(debug) Serial.printf("Cara no reconocida\n"); 
-                enviarWSTXT("Cara no reconocida");
+                /*enviarWSTXT("Cara no reconocida");*/
                 }
               }
             }
@@ -602,9 +671,16 @@ void reconocimientoFacial(boolean debug)
       else
         {
         //No se ha detectado cara  
-        enviarWSTXT("No se detecta cara");
+        /*enviarWSTXT("No se detecta cara");*/
         }
       }
+
+    if(estadoReconocimiento!=estadoReconocimientoAnterior)  
+      {      
+      enviarWSTXT(mensajesWS[estadoReconocimiento]+mensajeWS); 
+      if (estadoReconocimiento==CARA_CAPTURADA) estadoReconocimiento=CAMARA_KO;//Para que actualice en la captura
+      }
+
     /**************************FIN RECONOCER CARA*********************/
     //Si esta en modo streamming
     if (g_state == START_STREAM && cliente.id!=NOT_CONNECTED) 
@@ -615,10 +691,10 @@ void reconocimientoFacial(boolean debug)
 
     if(debug) Serial.printf("Liberamos y salimos\n");
     dl_matrix3du_free(image_matrix);
-    }
+  /*  }
 
   if(fb!=NULL) 
-    {
+    {*/
     esp_camera_fb_return(fb);
     fb=NULL;
     }     
