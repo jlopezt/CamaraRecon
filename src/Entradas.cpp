@@ -81,25 +81,19 @@ boolean EntradasClass::parseaConfiguracionEntradas(String contenido)
   DynamicJsonBuffer jsonBuffer;
   JsonObject& json = jsonBuffer.parseObject(contenido.c_str());
   
-  json.printTo(Serial);
   if (!json.success()) return false;
-        
-  Serial.println("parsed json");
+
+  Serial.println("parsed json:");
+  json.printTo(Serial);       
+  Serial.println();     
 //******************************Parte especifica del json a leer********************************
-    JsonArray& Entradas = json["Entradas"];
+  JsonArray& Entradas = json["Entradas"];
 
   int8_t max;
   max=(Entradas.size()<MAX_ENTRADAS?Entradas.size():MAX_ENTRADAS);
   for(int8_t i=0;i<max;i++)
     { 
     entradas[i].inicializaEntrada(CONFIGURADO, String((const char *)Entradas[i]["nombre"]), 0, String((const char *)Entradas[i]["tipo"]), atoi(Entradas[i]["GPIO"]));
-    /*
-    entradas[i].setConfigurada(CONFIGURADO) ;//la inicializo a no configurada
-    entradas[i].setNombre(String((const char *)Entradas[i]["nombre"]));
-    entradas[i].setEstado(0);    
-    entradas[i].setTipo(String((const char *)Entradas[i]["tipo"]));
-    entradas[i].setPin(atoi(Entradas[i]["GPIO"]));
-    */
     }
 
   Serial.printf("Entradas:\n"); 
@@ -123,7 +117,7 @@ void EntradasClass::consultaEntradas(bool debug)
     if(entradas[i].getConfigurada()==CONFIGURADO) 
       {
       entradas[i].setEstado(digitalRead(entradas[i].getPin())); //si la entrada esta configurada
-      //Serial.printf("Entrada %i en pin %i leido %i\n",i,entradas[i].pin,entradas[i].estado);
+      //Serial.printf("Entrada %i en pin %i leido %i\n",i,entradas[i].getPin(),entradas[i].getEstado());
       }
     }   
   }

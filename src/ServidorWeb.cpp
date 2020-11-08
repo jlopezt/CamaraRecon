@@ -16,6 +16,11 @@ Informacion del Hw del sistema http://IP/info
 /***************************** Defines *****************************/
 //Configuracion de los servicios web
 #define PUERTO_WEBSERVER  80
+
+#define FONDO     String("#DDDDDD")
+#define TEXTO     String("#000000")
+#define ACTIVO    String("#FFFF00")
+#define DESACTIVO String("#DDDDDD")
 /***************************** Defines *****************************/
 
 /***************************** Includes *****************************/
@@ -61,7 +66,27 @@ void handleRoot()
   //genero la respuesta por defecto  
   //cad += "<h1>" + cacharro.getNombreDispositivo() + "</h1>";
   cad += "<BR>\n";
- 
+
+///////////////////////// 
+   //Entradas    
+  //cad += tabla;//"<TABLE border=\"0\" cellpadding=\"0\" cellspacing=\"0\" class=\"tabla\">\n";
+  cad += "<TABLE border=\"0\" width=\"50%\" cellpadding=\"0\" cellspacing=\"0\" width=\"300\" class=\"tabla\">\n";
+  cad += "<CAPTION>Entradas</CAPTION>\n";    
+  for(int8_t i=0;i<MAX_ENTRADAS;i++)
+    {    
+    if(Entradas.entradaConfigurada(i)==CONFIGURADO) 
+      {
+      //cad += "<TR><TD>" + nombreEntrada(i) + "-></TD><TD>" + String(nombreEstadoEntrada(i,estadoEntrada(i))) + "</TD></TR>\n";    
+      cad += "<TR class=\"modo2\">";
+      cad += "<TD STYLE=\"color: " + TEXTO + "; text-align: center; background-color: " + FONDO + "; width: 100px\">" + Entradas.nombreEntrada(i) + "</TD>";
+      cad += "<TD STYLE=\"color: " + TEXTO + "; text-align: center; background-color: " + String((Entradas.estadoEntrada(i)==0?DESACTIVO:ACTIVO)) + "; width: 200px\">" + String(Entradas.estadoEntrada(i)) + "</TD>";
+      cad += "</TR>";      
+      }
+    }
+  cad += "</TABLE>\n";
+  cad += "<BR>\n";
+/////////////////////////
+
   //Enlaces
   cad += "<BR><BR>\n";
   cad += enlaces;
@@ -469,7 +494,7 @@ void handleNotFound()
 void inicializaWebServer(void)
   {
   cabeceraHTML="<!DOCTYPE html>\n<HTML>\n<HEAD><TITLE>" + cacharro.getNombreDispositivo() + " </TITLE></HEAD>\n<BODY>\n<h1><a href=\"../\" target=\"_self\">" + cacharro.getNombreDispositivo() + "</a><br></h1>";
-  
+
   /*******Configuracion del Servicio Web***********/  
   //Inicializo los serivcios  
   //decalra las URIs a las que va a responder

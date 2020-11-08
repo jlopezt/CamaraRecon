@@ -569,6 +569,13 @@ int caraReconocida(String nombre)
 /**********************************************************/
 void reconocimientoFacial(boolean debug) 
   {    
+  if(Entradas.estadoEntrada(0)== LOW || cliente.id==NOT_CONNECTED) {
+    //Serial.println("Si hay que entrar se entra, pero entrar para nada es tontería.");
+    return; //Si no hay movimiento en el PIR ni un cliente en el servidor web, no entro
+    }
+  Serial.println("Voy por la cara...");
+
+
   String mensajeWS="";
 
   if(debug) Serial.printf("*************Reconocimiento facial*****************\n");  
@@ -691,10 +698,7 @@ void reconocimientoFacial(boolean debug)
 
     if(debug) Serial.printf("Liberamos y salimos\n");
     dl_matrix3du_free(image_matrix);
-  /*  }
 
-  if(fb!=NULL) 
-    {*/
     esp_camera_fb_return(fb);
     fb=NULL;
     }     
