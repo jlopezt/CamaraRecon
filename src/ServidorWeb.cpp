@@ -37,9 +37,16 @@ bool handleFileRead(String path);
 WebServer server(PUERTO_WEBSERVER); //ESP8266WebServer server[MAX_WEB_SERVERS];
 
 //Cadenas HTML precargadas
-String cabeceraHTML="";//Se inicializa en  funcion inicializaWebServer "<HTML><HEAD><TITLE>" + cacharro.getNombreDispositivo() + "</TITLE></HEAD><BODY>";
-String pieHTML="\n</BODY>\n</HTML>";
-String enlaces="\n<TABLE>\n<CAPTION>Enlaces</CAPTION>\n<TR><TD><a href=\"info\" target=\"_self\">Info</a></TD></TR>\n<TR><TD><a href=\"test\" target=\"_self\">Test</a></TD></TR>\n<TR><TD><a href=\"restart\" target=\"_self\">Restart</a></TD></TR>\n<TR><TD><a href=\"particiones\" target=\"_self\">Particiones</a></TD></TR>\n<TR><TD><a href=\"listaFicheros\" target=\"_self\">Lista ficheros</a></TD></TR>\n</TABLE>\n"; 
+String cabeceraHTML="";
+
+//version de la web propia del cacharro
+String pagina_a = "<!DOCTYPE html>\n<html lang=\"es\">\n <head>\n <meta charset=\"UTF-8\">\n <TITLE>Domoticae</TITLE>\n <link rel=\"stylesheet\" type=\"text/css\" href=\"css.css\">\n </HEAD>\n <BODY>\n <table style=\"width:100%;\" cellpadding=\"10\" cellspacing=\"0\">\n  <tr style=\"height:20%; background-color:black\">\n  <th align=\"left\">\n   <span style=\"font-family:verdana;font-size:30px;color:white\">DOMOTI</span><span style=\"font-family:verdana;font-size:30px;color:red\">C</span><span style=\"font-family:verdana;font-size:30px;color:white\">AE - ";
+//en medio va el nombre_dispositivo
+String pagina_b = "</span> \n </th>\n </tr>\n <tr style=\"height:10%;\">\n <td>";
+String enlaces = "<table class=\"tabla\">\n	<tr class=\"modo1\">\n <td><a href=\"..\" target=\"_self\" style=\"text-decoration:none; color: black;\">Home</a></td>\n	<td><a href=\"index.html\" target=\"_self\" style=\"text-decoration:none; color: black;\">Imagen</a></td>\n	<td><a href=\"configEntradas\" target=\"_self\" style=\"text-decoration:none; color: black;\">Entradas</a></td>\n	<td><a href=\"listaFicheros\" target=\"_self\" style=\"text-decoration:none; color: black;\">Ficheros</a></td>\n		<td><a href=\"info\" target=\"_self\" style=\"text-decoration:none; color: black;\">Info</a></td>\n		<td><a href=\"particiones\" target=\"_self\" style=\"text-decoration:none; color: black;\">Particiones</a></td>\n	<td><a href=\"restart\" target=\"_self\" style=\"text-decoration:none; color: black;\">Restart</a></td>\n	</tr>\n</table>\n";
+String pagina_c = "</td></tr><TR style=\"height:60%\"><TD>";
+//En medio va el cuerpo de la pagina
+String pieHTML = "</TD>\n</TR>\n<TR>\n<TD style=\"color:white; background-color:black\"><a href=\"https://domoticae.lopeztola.com\" target=\"_self\" style=\"text-decoration:none; color:white;\">domoticae-2020</a></TD>\n</TR>\n</table>\n</BODY>\n</HTML>";
 
 /*******************************************************/
 /*                                                     */ 
@@ -63,13 +70,7 @@ void handleRoot()
   String cad=cabeceraHTML;
   String orden="";
 
-  //genero la respuesta por defecto  
-  //cad += "<h1>" + cacharro.getNombreDispositivo() + "</h1>";
-  cad += "<BR>\n";
-
-///////////////////////// 
-   //Entradas    
-  //cad += tabla;//"<TABLE border=\"0\" cellpadding=\"0\" cellspacing=\"0\" class=\"tabla\">\n";
+  //Entradas    
   cad += "<TABLE border=\"0\" width=\"50%\" cellpadding=\"0\" cellspacing=\"0\" width=\"300\" class=\"tabla\">\n";
   cad += "<CAPTION>Entradas</CAPTION>\n";    
   for(int8_t i=0;i<MAX_ENTRADAS;i++)
@@ -87,12 +88,10 @@ void handleRoot()
   cad += "<BR>\n";
 /////////////////////////
 
-  //Enlaces
-  cad += "<BR><BR>\n";
-  cad += enlaces;
-  cad += "<BR><BR>" + cacharro.getNombreDispositivo() + " . Version " + String(VERSION) + ".";
-  cad += pieHTML;
+  //Informacion del dispositivo
+  cad += "<p style=\"font-size: 12px;color:black;\">" + cacharro.getNombreDispositivo() + " - Version " + String(VERSION) + "</p>";
 
+  cad += pieHTML;
   server.send(200, "text/html", cad);
   }
 
@@ -493,7 +492,8 @@ void handleNotFound()
 /*********************************** Inicializacion y configuracion *****************************************************************/
 void inicializaWebServer(void)
   {
-  cabeceraHTML="<!DOCTYPE html>\n<HTML>\n<HEAD><TITLE>" + cacharro.getNombreDispositivo() + " </TITLE></HEAD>\n<BODY>\n<h1><a href=\"../\" target=\"_self\">" + cacharro.getNombreDispositivo() + "</a><br></h1>";
+  //lo inicializo aqui, despues de leer el nombre del dispositivo en la configuracion del cacharro  
+  cabeceraHTML = pagina_a + cacharro.getNombreDispositivo() + pagina_b + enlaces + pagina_c;
 
   /*******Configuracion del Servicio Web***********/  
   //Inicializo los serivcios  
@@ -545,7 +545,8 @@ bool handleFileRead(String path)
 
     String contenido="";
     SistemaFicheros.leeFichero(path, contenido);
-    server.send(200, "text/html", contenido);
+    //server.send(200, "text/html", contenido);
+    server.send(200, contentType, contenido);
     Serial.println(String("\tSent file: ") + path);
     return true;
     }

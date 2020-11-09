@@ -1,4 +1,9 @@
 {
-	"Entradas": []
-}
-
+	"Entradas": [
+	  {
+	  "GPIO": 16, 
+	  "nombre": "PIR", 
+	  "tipo": "INPUT"
+	  }
+	]
+  }  

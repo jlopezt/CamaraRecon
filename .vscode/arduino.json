@@ -2,5 +2,5 @@
     "board": "esp32:esp32:esp32cam",
     "configuration": "PartitionScheme=Cargador_OTA",
     "programmer": "AVRISP mkII",
-    "port": "COM4"
+    "port": "COM11"
 }
