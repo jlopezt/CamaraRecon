@@ -11,14 +11,33 @@
 /**********************************************/
 
 /***************************** Defines *****************************/
+//definicion de los comodines del MQTT
+#define WILDCARD_ALL      "#"
+#define WILDCARD_ONELEVEL "+"
+
+//definicion de constantes para WILL
+#define WILL_TOPIC  "will"
+#define WILL_QOS    1
+#define WILL_RETAIN false
+#define WILL_MSG    String("¡" + miMQTT.getID_MQTT() + " caido!").c_str()
+
+//#define MQTT_KEEPALIVE 60
+#define CLEAN_SESSION true
+
+//definicion del topic ping
+#define TOPIC_PING "ping"
+#define TOPIC_PING_RESPUESTA "ping/respuesta"
+
+#define DIR_CA_CERT "/ca.crt"
 /***************************** Defines *****************************/
 
 /***************************** Includes *****************************/
-#include <Wifi_MQTT.h>
+#include <MQTT.h>
 /***************************** Includes *****************************/
 
 miMQTTClass miMQTT;
-PubSubClient clienteMQTT(miMQTT.espClient);
+//PubSubClient clienteMQTT(miMQTT.espClient);
+//PubSubClient clienteMQTT;
 
 /************************************************/
 /* Inicializa valiables y estado del bus MQTT   */
@@ -29,8 +48,28 @@ void miMQTTClass::inicializaMQTT(void)
   if (!recuperaDatosMQTT(false)) Serial.printf("error al recuperar config MQTT.\nConfiguracion por defecto.\n");
 
 	//Si va bien inicializo con los valores correstoc, si no con valores por defecto
+  
+  if(modoMQTT=="TLS")
+    {
+    Serial.printf("Modo de conexion: %s\n", modoMQTT.c_str());
+    
+    //Leo el fichero con el certificado de CA
+    if(!SistemaFicheros.leeFichero(DIR_CA_CERT,caCert)) Serial.printf("No se pudo leer el certificado CA\n");
+    //else Serial.printf("Certificado CA:\n%s\n",caCert.c_str());
+
+    /* set SSL/TLS certificate */
+    espClientSSL.setCACert(caCert.c_str());
+    clienteMQTT.setClient(espClientSSL);
+    }
+  else
+    {
+    clienteMQTT.setClient(espClient);
+    }
+  Serial.printf("Cliente MQTT configurado");
+
   //confituro el servidor y el puerto
-  clienteMQTT.setServer(IPBroker, puertoBroker);
+  if (BrokerDir==String("")) clienteMQTT.setServer(IPBroker, puertoBroker);
+  else clienteMQTT.setServer(BrokerDir.c_str(), puertoBroker);
   //configuro el callback, si lo hay
   clienteMQTT.setCallback(callbackMQTT);
 
@@ -48,9 +87,12 @@ boolean miMQTTClass::recuperaDatosMQTT(boolean debug)
   if (debug) Serial.println("Recupero configuracion de archivo...");
 
   //cargo el valores por defecto
+  modoMQTT=""; //Sin encriptacion SSL/TLS
   IPBroker.fromString("0.0.0.0");
+  BrokerDir="";
   ID_MQTT=String(NOMBRE_FAMILIA); //ID del modulo en su conexion al broker
   puertoBroker=0;
+  timeReconnectMQTT=100;
   usuarioMQTT="";
   passwordMQTT="";
   topicRoot=""; 
@@ -80,15 +122,18 @@ boolean miMQTTClass::parseaConfiguracionMQTT(String contenido)
     {
     Serial.println("parsed json");
 //******************************Parte especifica del json a leer********************************
-    IPBroker.fromString((const char *)json["IPBroker"]);
+    if (json.containsKey("modoMQTT"))  modoMQTT=json.get<String>("modoMQTT");
+    if (json.containsKey("IPBroker")) IPBroker.fromString(json.get<String>("IPBroker"));
+    if (json.containsKey("BrokerDir")) BrokerDir=json.get<String>("BrokerDir");    
     ID_MQTT=((const char *)json["ID_MQTT"]);
     puertoBroker = atoi(json["puerto"]); 
+    timeReconnectMQTT=json.get<uint16_t>("timeReconnectMQTT");
     usuarioMQTT=((const char *)json["usuarioMQTT"]);
     passwordMQTT=((const char *)json["passwordMQTT"]);
     topicRoot=((const char *)json["topicRoot"]);
     publicarEntradas=atoi(json["publicarEntradas"]); 
     publicarSalidas=atoi(json["publicarSalidas"]); 
-    Serial.printf("Configuracion leida:\nID MQTT: %s\nIP broker: %s\nIP Puerto del broker: %i\nUsuario: %s\nPassword: %s\nTopic root: %s\nPublicar entradas: %i\nPublicar salidas: %i\n",ID_MQTT.c_str(),IPBroker.toString().c_str(),puertoBroker,usuarioMQTT.c_str(),passwordMQTT.c_str(),topicRoot.c_str(),publicarEntradas,publicarSalidas);
+    Serial.printf("Configuracion leida:\nID MQTT: %s\nIP broker: %s\nBrokerDir: %s\nIP Puerto del broker: %i\ntimeReconnectMQTT: %i\nUsuario: %s\nPassword: %s\nTopic root: %s\nPublicar entradas: %i\nPublicar salidas: %i\n",ID_MQTT.c_str(),IPBroker.toString().c_str(),BrokerDir.c_str(),puertoBroker,timeReconnectMQTT,usuarioMQTT.c_str(),passwordMQTT.c_str(),topicRoot.c_str(),publicarEntradas,publicarSalidas);
 //************************************************************************************************
     return true;
     }
@@ -107,6 +152,7 @@ String miMQTTClass::generaJSONPing(boolean debug)
   cad += "\"myIP\": \"" + RedWifi.getIP(false) + "\",";
   cad += "\"ID_MQTT\": \"" + ID_MQTT + "\",";
   cad += "\"IPBbroker\": \"" + IPBroker.toString() + "\",";
+  cad += "\"BrokerDir\": \"" + BrokerDir + "\",";
   cad += "\"IPPuertoBroker\":" + String(puertoBroker) + "";
   cad += "}";
 
@@ -194,8 +240,18 @@ boolean miMQTTClass::conectaMQTT(void)
   {
   int8_t intentos=0;
 
-  if(IPBroker==IPAddress(0,0,0,0)) return (false);
+  if(IPBroker==IPAddress(0,0,0,0) && BrokerDir==String("")) 
+    {
+    if(debugGlobal) Serial.printf("IP del broker = 0.0.0.0 y BrokerDir="", no se intenta conectar.\n");
+    return (false);//SI la IP del Broker es 0.0.0.0 (IP por defecto) no intentaq conectar y sale con error
+    }  
     
+  if(WiFi.status()!=WL_CONNECTED) 
+    {
+    if(debugGlobal) Serial.printf("La conexion WiFi no se encuentra disponible.\n");
+    return (false);
+    }
+
   while (!clienteMQTT.connected()) 
     {    
     if(debugGlobal) Serial.println("No conectado, intentando conectar.");
@@ -324,6 +380,10 @@ String miMQTTClass::stateTexto(void)
       
   return (cad);
   }
+
+String miMQTTClass::getWillTopic(void) {return WILL_TOPIC;};
+String miMQTTClass::getWillMessage(void) {return WILL_MSG;};
+uint8_t miMQTTClass::getCleanSession(void) {return CLEAN_SESSION;};  
   
 int8_t miMQTTClass::getPublicarEntradas(void){return publicarEntradas;};
 void miMQTTClass::setPublicarEntradas(int8_t pubEnt){publicarEntradas=pubEnt;};

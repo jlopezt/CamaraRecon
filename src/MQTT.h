@@ -13,29 +13,13 @@
 /***************************** Defines *****************************/
 #ifndef _MQTT_
 #define _MQTT_
-
-//#define MQTT_KEEPALIVE 60
-#define CLEAN_SESSION true
-
-//definicion de los comodines del MQTT
-#define WILDCARD_ALL      "#"
-#define WILDCARD_ONELEVEL "+"
-
-//definicion de constantes para WILL
-#define WILL_TOPIC  "will"
-#define WILL_QOS    1
-#define WILL_RETAIN false
-#define WILL_MSG    String("¡" + miMQTT.getID_MQTT() + " caido!").c_str()
-
-//definicion del topic ping
-#define TOPIC_PING "ping"
-#define TOPIC_PING_RESPUESTA "ping/respuesta"
 /***************************** Defines *****************************/
 
 /***************************** Includes *****************************/
 #include <Global.h>
 #include <PubSubClient.h>
 #include <WiFiClient.h>
+#include <WiFiClientSecure.h>
 /***************************** Includes *****************************/
 
 //funcion de callback para gestion de mensajes. No puede ser miembro de la clase
@@ -45,8 +29,15 @@ class miMQTTClass
 {
 private:
 //Definicion de variables privadas
+PubSubClient clienteMQTT;
+
+String caCert; //Contenedor para el certificado de CA
+
+String modoMQTT;  //Tipo de seguridad (MQTT vs MQTTS)
 IPAddress IPBroker; //IP del bus MQTT
+String BrokerDir; //IP o URL del broker
 uint16_t puertoBroker; //Puerto del bus MQTT
+uint16_t timeReconnectMQTT; //Tiempo de espera en la reconexion al bus
 String usuarioMQTT; //usuario par ala conxion al broker
 String passwordMQTT; //password parala conexion al broker
 String topicRoot; //raiz del topic a publicar. Util para separar mensajes de produccion y prepropduccion
@@ -62,6 +53,8 @@ String generaJSONPing(boolean debug);
 
 public:
 WiFiClient espClient;
+WiFiClientSecure espClientSSL;
+
 void inicializaMQTT(void);
 boolean enviarMQTT(String topic, String payload);
 void atiendeMQTT(boolean debug);
@@ -71,9 +64,18 @@ String stateTexto(void);
 String gettopicRoot(void) {return topicRoot;};
 String getID_MQTT(void) {return ID_MQTT;};
 IPAddress getIPBroker(void) {return IPBroker;};
+String getBrokerDir(void){return BrokerDir;}
+String getBroker(void){
+  if (BrokerDir!="") return BrokerDir;
+  
+  return IPBroker.toString();
+}
 uint16_t getPuertoBroker(void) {return puertoBroker;};
 String getUsuarioMQTT(void) {return usuarioMQTT;};
 String getPasswordMQTT(void) {return passwordMQTT;};
+String getWillTopic(void);
+String getWillMessage(void);
+uint8_t getCleanSession(void);
 
 int8_t getPublicarEntradas(void);
 void setPublicarEntradas(int8_t pubEnt);
