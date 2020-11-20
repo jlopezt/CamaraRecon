@@ -8,7 +8,7 @@
 
 //Defines generales
 #define NOMBRE_FAMILIA   "Camara reconocimiento facial"
-#define VERSION          "1.3.3 (ESP32 2.0|Migracion C++|OTA|MQTT|FicherosWeb|FTP)"
+#define VERSION          "1.4.0 (ESP32 2.0|Migracion C++|OTA|MQTTS|FicherosWeb|FTP|cargador|Nueva Web)"
 #define SEPARADOR        '|'
 #define SUBSEPARADOR     '#'
 #define KO               -1

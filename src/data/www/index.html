@@ -177,9 +177,28 @@ input:checked+.slider:before {
 }
 
 </style>
+
+<script type="text/javascript">
+  function aCasa() {
+    var x = location.href;
+    
+    var cadenaPartida = x.split("/");
+    var salida="";
+  
+    for (var i=0; i < cadenaPartida.length-1; i++) {
+      if(salida!="") salida +="/";
+      salida+=cadenaPartida[i];
+      }
+    window.location.href = salida;
+  }
+  </script>
+
 </head>
 <body>
 <div id="content-left">
+  <div class="buttons">
+    <button id="button-home" class="left" onClick="aCasa();">Home</button>
+  </div>
   <div id="stream-container" class="image-container"> <img id="stream" src=""> </div>
   <div id="foto-container" class="image-container"> <img id="foto" src=""> </div>
 </div>
@@ -225,6 +244,7 @@ document.addEventListener("DOMContentLoaded", function(event)
   const WS_URL = "ws://" + window.location.host + ":88";
   var ws;// = new WebSocket(WS_URL);
 
+  const home = document.getElementById("button-home"); //boton de home
   const view = document.getElementById("stream"); //la imagen
   const viewfoto = document.getElementById("foto"); //Imagen para foto
   const personFormField = document.getElementById("person"); //Cuadro de texto para escribir el nombre
