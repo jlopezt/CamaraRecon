@@ -61,7 +61,7 @@
 #include <Salidas.h>
 #include <Entradas.h>
 #include <Secuenciador.h>
-#include <Wifi_MQTT.h>
+#include <MQTT.h>
 #include <ArduinoOTA.h>
 #include <RedWifi.h>
 /***************************** Includes *****************************/
