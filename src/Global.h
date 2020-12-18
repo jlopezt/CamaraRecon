@@ -8,7 +8,7 @@
 
 //Defines generales
 #define NOMBRE_FAMILIA   "Camara reconocimiento facial"
-#define VERSION          "1.4.0 (ESP32 2.0|Migracion C++|OTA|MQTTS|FicherosWeb|FTP|cargador|Nueva Web)"
+#define VERSION          "1.5.0 (ESP32 2.0|Migracion C++|OTA|MQTTS|FicherosWeb|FTP|cargador|Nueva Web)"
 #define SEPARADOR        '|'
 #define SUBSEPARADOR     '#'
 #define KO               -1
@@ -64,9 +64,9 @@
 #include <MQTT.h>
 #include <ArduinoOTA.h>
 #include <RedWifi.h>
-/***************************** Includes *****************************/
 #include <WiFiClientSecure.h>
 #include <WiFi.h>
+/***************************** Includes *****************************/
         
 extern int debugGlobal;
 extern boolean trazaMemoria;

@@ -11,17 +11,17 @@
 
 // Una vuela de loop son ANCHO_INTERVALO segundos 
 #define ANCHO_INTERVALO                 100 //Ancho en milisegundos de la rodaja de tiempo
-#define FRECUENCIA_OTA                    5 //cada cuantas vueltas de loop atiende las acciones
+#define FRECUENCIA_OTA                   10 //cada cuantas vueltas de loop atiende las acciones
 #define FRECUENCIA_RECONOCIMIENTO_FACIAL  5 //cada cuantas vueltas de loop lee la imagen para reconocer una cara
-#define FRECUENCIA_ENTRADAS               5 //cada cuantas vueltas de loop atiende las entradas
-#define FRECUENCIA_SALIDAS                5 //cada cuantas vueltas de loop atiende las salidas
+#define FRECUENCIA_ENTRADAS              10 //cada cuantas vueltas de loop atiende las entradas
+#define FRECUENCIA_SALIDAS               10 //cada cuantas vueltas de loop atiende las salidas
 #define FRECUENCIA_SECUENCIADOR          10 //cada cuantas vueltas de loop atiende al secuenciador
-#define FRECUENCIA_SERVIDOR_WEB           5 //cada cuantas vueltas de loop atiende el servidor web
-#define FRECUENCIA_SERVIDOR_WEBSOCKET     1 //cada cuantas vueltas de loop atiende el servidor web
-#define FRECUENCIA_SERVIDOR_FTP           3 //cada cuantas vueltas de loop atiende el servidor ftp
+//#define FRECUENCIA_SERVIDOR_WEB           5 //cada cuantas vueltas de loop atiende el servidor web
+#define FRECUENCIA_SERVIDOR_WEBSOCKET     5 //cada cuantas vueltas de loop atiende el servidor web
+#define FRECUENCIA_SERVIDOR_FTP           2 //cada cuantas vueltas de loop atiende el servidor ftp
 #define FRECUENCIA_MQTT                  10 //cada cuantas vueltas de loop envia y lee del broker MQTT
 #define FRECUENCIA_ENVIO_DATOS           50 //cada cuantas vueltas de loop envia al broker el estado de E/S
-#define FRECUENCIA_ORDENES                2 //cada cuantas vueltas de loop atiende las ordenes via serie 
+#define FRECUENCIA_ORDENES                5 //cada cuantas vueltas de loop atiende las ordenes via serie 
 /***************************** Defines *****************************/
 
 /***************************** Includes *****************************/
@@ -153,7 +153,7 @@ void loop()
   if ((cacharro.getVuelta() % FRECUENCIA_ENTRADAS)==0) Entradas.consultaEntradas(debugGlobal); //comprueba las entradas
   if ((cacharro.getVuelta() % FRECUENCIA_SALIDAS)==0) Salidas.actualizaSalidas(debugGlobal); //comprueba las salidas
   //Prioridad 3: Interfaces externos de consulta    
-  if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_WEB)==0) webServer(debugGlobal); //atiende el servidor web
+  //if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_WEB)==0) webServer(debugGlobal); //atiende el servidor web
   if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_FTP)==0) ftpSrv.handleFTP(); //atiende el servidor ftp
   if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_WEBSOCKET)==0) atiendeWebsocket();
   if ((cacharro.getVuelta() % FRECUENCIA_MQTT)==0) miMQTT.atiendeMQTT(debugGlobal);      
