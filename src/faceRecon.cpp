@@ -573,8 +573,9 @@ void reconocimientoFacial(boolean debug)
     //Serial.println("Si hay que entrar se entra, pero entrar para nada es tontería.");
     return; //Si no hay movimiento en el PIR ni un cliente en el servidor web, no entro
     }
-  //Serial.println("Voy por la cara...");
 
+  //Entro en reconocimiento  
+  Serial.println("Voy por la cara...");
 
   String mensajeWS="";
 
@@ -592,7 +593,10 @@ void reconocimientoFacial(boolean debug)
 
     if(debug) Serial.printf("Imagen leida de la camara\n");
     dl_matrix3du_t *image_matrix =  dl_matrix3du_alloc(1, fb->width, fb->height, 3);//dl_matrix3du_alloc(1, 320, 240, 3); //NO GESTIONO QUE SEA NULL
-    if(!image_matrix) Serial.printf("AAAArrrrrrgggggghhhh!!!!!!!!!!!!!!!!!!");
+    if(!image_matrix) {
+      Serial.printf("AAAArrrrrrgggggghhhh!!!!!!!!!!!!!!!!!!\n dl_matrix3du_alloc devolvio NULL. ancho: %i, alto: %i\n",fb->width, fb->height);
+      return;
+    }
     /**************************INICIO RECONOCER CARA*********************/
     if(reconocerCaras)
       {
