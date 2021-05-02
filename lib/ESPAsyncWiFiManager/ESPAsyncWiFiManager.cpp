@@ -746,12 +746,12 @@ void AsyncWiFiManager::handleRoot(AsyncWebServerRequest *request) {
     return;
   }
 
-  String page = FPSTR(WFM_HTTP_HEAD);
+  String page = FPSTR(WFM_HTTP__HEAD);
   page.replace("{v}", "Options");
   page += FPSTR(HTTP_SCRIPT);
   page += FPSTR(HTTP_STYLE);
   page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+  page += FPSTR(HTTP__HEAD_END);
   page += "<h1>";
   page += _apName;
   page += "</h1>";
@@ -771,12 +771,12 @@ void AsyncWiFiManager::handleWifi(AsyncWebServerRequest *request,boolean scan) {
 
   DEBUG_WM(F("Handle wifi"));
 
-  String page = FPSTR(WFM_HTTP_HEAD);
+  String page = FPSTR(WFM_HTTP__HEAD);
   page.replace("{v}", "Config ESP");
   page += FPSTR(HTTP_SCRIPT);
   page += FPSTR(HTTP_STYLE);
   page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+  page += FPSTR(HTTP__HEAD_END);
 
   if (scan) {
     wifiSSIDscan=false;
@@ -943,13 +943,13 @@ void AsyncWiFiManager::handleWifiSave(AsyncWebServerRequest *request) {
     optionalIPFromString(&_sta_static_dns2, dns2.c_str());
   }
 
-  String page = FPSTR(WFM_HTTP_HEAD);
+  String page = FPSTR(WFM_HTTP__HEAD);
   page.replace("{v}", "Credentials Saved");
   page += FPSTR(HTTP_SCRIPT);
   page += FPSTR(HTTP_STYLE);
   page += _customHeadElement;
   page += F("<meta http-equiv=\"refresh\" content=\"5; url=/i\">");
-  page += FPSTR(HTTP_HEAD_END);
+  page += FPSTR(HTTP__HEAD_END);
   page += FPSTR(HTTP_SAVED);
   page += FPSTR(HTTP_END);
 
@@ -1010,14 +1010,14 @@ String AsyncWiFiManager::infoAsString()
 void AsyncWiFiManager::handleInfo(AsyncWebServerRequest *request) {
   DEBUG_WM(F("Info"));
 
-  String page = FPSTR(WFM_HTTP_HEAD);
+  String page = FPSTR(WFM_HTTP__HEAD);
   page.replace("{v}", "Info");
   page += FPSTR(HTTP_SCRIPT);
   page += FPSTR(HTTP_STYLE);
   page += _customHeadElement;
   if (connect==true)
   page += F("<meta http-equiv=\"refresh\" content=\"5; url=/i\">");
-  page += FPSTR(HTTP_HEAD_END);
+  page += FPSTR(HTTP__HEAD_END);
   page += F("<dl>");
   if (connect==true)
   {
@@ -1038,12 +1038,12 @@ void AsyncWiFiManager::handleInfo(AsyncWebServerRequest *request) {
 void AsyncWiFiManager::handleReset(AsyncWebServerRequest *request) {
   DEBUG_WM(F("Reset"));
 
-  String page = FPSTR(WFM_HTTP_HEAD);
+  String page = FPSTR(WFM_HTTP__HEAD);
   page.replace("{v}", "Info");
   page += FPSTR(HTTP_SCRIPT);
   page += FPSTR(HTTP_STYLE);
   page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+  page += FPSTR(HTTP__HEAD_END);
   page += F("Module will reset in a few seconds.");
   page += FPSTR(HTTP_END);
   request->send(200, "text/html", page);
@@ -1079,7 +1079,7 @@ void AsyncWiFiManager::handleNotFound(AsyncWebServerRequest *request) {
   message += "URI: ";
   message += request->url();
   message += "\nMethod: ";
-  message += ( request->method() == HTTP_GET ) ? "GET" : "POST";
+  message += ( request->method() == HTTP__GET ) ? "GET" : "POST";
   message += "\nArguments: ";
   message += request->args();
   message += "\n";

@@ -59,14 +59,14 @@ class AsyncResponseStream;
 
 //#ifndef WEBSERVER_H
 typedef enum {
-  HTTP_GET     = 0b00000001,
-  HTTP_POST    = 0b00000010,
-  HTTP_DELETE  = 0b00000100,
-  HTTP_PUT     = 0b00001000,
-  HTTP_PATCH   = 0b00010000,
-  HTTP_HEAD    = 0b00100000,
-  HTTP_OPTIONS = 0b01000000,
-  HTTP_ANY     = 0b01111111,
+  HTTP__GET     = 0b00000001,
+  HTTP__POST    = 0b00000010,
+  HTTP__DELETE  = 0b00000100,
+  HTTP__PUT     = 0b00001000,
+  HTTP__PATCH   = 0b00010000,
+  HTTP__HEAD    = 0b00100000,
+  HTTP__OPTIONS = 0b01000000,
+  HTTP__ANY     = 0b01111111,
 } WebRequestMethod;
 //#endif
 

@@ -61,7 +61,7 @@ void setup() {
     wifiManager.startConfigPortalModeless("ModelessAP", "Password");
 
 
- server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+ server.on("/", HTTP__GET, [](AsyncWebServerRequest *request){
     request->send(200, "text/plain", "Hello World");
   });
 

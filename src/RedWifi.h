@@ -12,8 +12,8 @@
 
 /***************************** Includes *****************************/
 #include <WiFi.h>
-#include <DNSServer.h>
-#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager
+//#include <DNSServer.h>
+//#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager
 #include <WiFiMulti.h>
 /***************************** Includes *****************************/
 

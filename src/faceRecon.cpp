@@ -570,12 +570,12 @@ int caraReconocida(String nombre)
 void reconocimientoFacial(boolean debug) 
   {    
   if(Entradas.estadoEntrada(0)== LOW && cliente.id==NOT_CONNECTED) {
-    //Serial.println("Si hay que entrar se entra, pero entrar para nada es tontería.");
+    //Serial.println("Si hay que entrar se entra, pero entrar para nada es tonteria.");
     return; //Si no hay movimiento en el PIR ni un cliente en el servidor web, no entro
     }
 
   //Entro en reconocimiento  
-  Serial.println("Voy por la cara...");
+  //Serial.println("Voy por la cara...");
 
   String mensajeWS="";
 

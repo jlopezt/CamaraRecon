@@ -19,6 +19,11 @@
 //needed for library
 #include <Global.h> //Lo tienen todos los modulos
 #include <RedWiFi.h> 
+//#include <DNSServer.h>
+#include <ESPAsyncWebServer.h>
+#include <ESPAsyncWiFiManager.h>         //https://github.com/alanswx/ESPAsyncWiFiManager.git
+
+//#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager
 /***************************** Includes *****************************/
 
 void WiFiEvent(WiFiEvent_t event);
@@ -43,15 +48,6 @@ void miSaveConfigCallback(void)
   
   ///conectado=true;
   }
-
-/*
-void miAPCallback(WiFiManager *myWifiManager)
-  {
-  Serial.println("Portal de configuracion levantado");  
-  Serial.print("Base activada con el nombre ");
-  Serial.println(myWifiManager->getConfigPortalSSID());  
-  }
-*/
 
 /************************************************/
 /* Recupera los datos de configuracion          */
@@ -171,14 +167,19 @@ boolean RedWifiClass::inicializaWifi(boolean debug)
 /***********************************************************/ 
 boolean RedWifiClass::conectaAutodetect(boolean debug)
   {
+  //Para AsuncWifiManager
+  //Variables locales, una vez utilizadas, se destruyen y liberan el puerto
+  AsyncWebServer server(80);
+  DNSServer dns;
+  AsyncWiFiManager wifiManager(&server,&dns);
+
   //WiFiManager
-  //Local intialization. Once its business is done, there is no need to keep it around
-  WiFiManager wifiManager;
+  //WiFiManager wifiManager;
 
   Serial.println("\n Entrando...");
   
   //WiFiManagerParameter(const char *id, const char *placeholder, const char *defaultValue, int length, const char *custom);    
-  WiFiManagerParameter Nombre_Parametro("1","dispositivo",String(NOMBRE_FAMILIA).c_str(),MAX_LONG_NOMBRE_DISPOSITIVO+1,"Nombre del dispositivo");
+  AsyncWiFiManagerParameter Nombre_Parametro("1","dispositivo",String(NOMBRE_FAMILIA).c_str(),MAX_LONG_NOMBRE_DISPOSITIVO+1,"Nombre del dispositivo");
   Serial.println(Nombre_Parametro.getID());
   Serial.println(Nombre_Parametro.getValue());
   Serial.println(Nombre_Parametro.getPlaceholder());

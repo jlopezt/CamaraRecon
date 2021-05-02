@@ -32,6 +32,7 @@ Informacion del Hw del sistema http://IP/info
 #include <OTA.h>
 #include <FS.h>     //this needs to be first, or it all crashes and burns...
 #include <SPIFFS.h>
+#include <Entradas.h>
 /***************************** Includes *****************************/
 
 //Prototipo de funciones
@@ -45,6 +46,7 @@ AsyncWebServer serverX(PUERTO_WEBSERVER);
 String cabeceraHTML="";
 
 //version de la web propia del cacharro
+/*
 String pagina_a = "<!DOCTYPE html>\n<html lang=\"es\">\n <head>\n <meta charset=\"UTF-8\">\n <TITLE>Domoticae</TITLE>\n <link rel=\"stylesheet\" type=\"text/css\" href=\"css.css\">\n </HEAD>\n <BODY>\n <table style=\"width:100%;\" cellpadding=\"10\" cellspacing=\"0\">\n  <tr style=\"height:20%; background-color:black\">\n  <th align=\"left\">\n   <span style=\"font-family:verdana;font-size:30px;color:white\">DOMOTI</span><span style=\"font-family:verdana;font-size:30px;color:red\">C</span><span style=\"font-family:verdana;font-size:30px;color:white\">AE - ";
 //en medio va el nombre_dispositivo
 String pagina_b = "</span> \n </th>\n </tr>\n <tr style=\"height:10%;\">\n <td>";
@@ -52,6 +54,14 @@ String enlaces = "<table class=\"tabla\">\n	<tr class=\"modo1\">\n <td><a href=\
 String pagina_c = "</td></tr><TR style=\"height:60%\"><TD>";
 //En medio va el cuerpo de la pagina
 String pieHTML = "</TD>\n</TR>\n<TR>\n<TD style=\"color:white; background-color:black\"><a href=\"https://domoticae.lopeztola.com\" target=\"_self\" style=\"text-decoration:none; color:white;\">domoticae-2020</a></TD>\n</TR>\n</table>\n</BODY>\n</HTML>";
+*/
+const char pagina_a[] PROGMEM = "<!DOCTYPE html>\n<html lang=\"es\">\n <head>\n <meta charset=\"UTF-8\">\n <TITLE>Domoticae</TITLE>\n <link rel=\"stylesheet\" type=\"text/css\" href=\"css.css\">\n </HEAD>\n <BODY>\n <table style=\"width:100%;\" cellpadding=\"10\" cellspacing=\"0\">\n  <tr style=\"height:20%; background-color:black\">\n  <th align=\"left\">\n   <span style=\"font-family:verdana;font-size:30px;color:white\">DOMOTI</span><span style=\"font-family:verdana;font-size:30px;color:red\">C</span><span style=\"font-family:verdana;font-size:30px;color:white\">AE - ";
+//en medio va el nombre_dispositivo
+const char pagina_b[] PROGMEM = "</span> \n </th>\n </tr>\n <tr style=\"height:10%;\">\n <td>";
+const char enlaces[] PROGMEM = "<table class=\"tabla\">\n	<tr class=\"modo1\">\n <td><a href=\"./\" target=\"_self\" style=\"text-decoration:none; color: black;\">Home</a></td>\n	<td><a href=\"index.html\" target=\"_self\" style=\"text-decoration:none; color: black;\">Imagen</a></td>\n	<td><a href=\"configEntradas\" target=\"_self\" style=\"text-decoration:none; color: black;\">Entradas</a></td>\n	<td><a href=\"listaFicheros\" target=\"_self\" style=\"text-decoration:none; color: black;\">Ficheros</a></td>\n		<td><a href=\"info\" target=\"_self\" style=\"text-decoration:none; color: black;\">Info</a></td>\n		<td><a href=\"particiones\" target=\"_self\" style=\"text-decoration:none; color: black;\">Particiones</a></td>\n	<td><a href=\"restart\" target=\"_self\" style=\"text-decoration:none; color: black;\">Restart</a></td>\n	</tr>\n</table>\n";
+const char pagina_c[] PROGMEM = "</td></tr><TR style=\"height:60%\"><TD>";
+//En medio va el cuerpo de la pagina
+const char pieHTML[] PROGMEM = "</TD>\n</TR>\n<TR>\n<TD style=\"color:white; background-color:black\"><a href=\"https://domoticae.lopeztola.com\" target=\"_self\" style=\"text-decoration:none; color:white;\">domoticae-2020</a></TD>\n</TR>\n</table>\n</BODY>\n</HTML>";
 
 /*******************************************************/
 /*                                                     */ 
@@ -101,20 +111,61 @@ void handleRoot(AsyncWebServerRequest *request)
   request->send(200, "text/html", cad);
   }
 
-/*********************************************/
-/*                                           */
-/*  Servicio de test                         */
-/*                                           */
-/*********************************************/  
-void handleTest(AsyncWebServerRequest *request)
+/*****************************************************/
+/*                                                   */
+/*  Servicio de consulta de estado de las entradas   */
+/*  devuelve un formato json                         */
+/*                                                   */
+/*****************************************************/  
+void handleConfigEntradas(AsyncWebServerRequest *request)
   {
-  String cad=cabeceraHTML;
-  //cad += "<h1>" + cacharro.getNombreDispositivo() + "</h1>";
-  
-  cad += "Test OK<br>";
+  String cad="";
+
+  //genero la respuesta por defecto
+  cad += cabeceraHTML;
+
+  //Estados
+  cad += "<TABLE border=\"0\" width=\"80%\" cellpadding=\"0\" cellspacing=\"0\" width=\"300\" class=\"tabla\">\n";
+  cad += "<CAPTION>Entradas</CAPTION>\n";  
+
+  cad += "<TR>"; 
+  cad += "<TH>id</TH>";  
+  cad += "<TH>Nombre</TH>";
+  cad += "<TH>Configurada</TH>";
+  cad += "<TH>Tipo</TH>";
+  cad += "<TH>Pin</TH>";
+  cad += "<TH>Estado</TH>";
+  /*
+  cad += "<TH>Estado activo</TH>";
+  cad += "<TH>Estado fisico</TH>";
+  cad += "<TH>Estado</TH>";
+  cad += "<TH>Nombre del estado</TH>";
+  cad += "<TH>mensaje</TH>";
+  */
+  cad += "</TR>"; 
+
+  for(uint8_t entrada=0;entrada<MAX_ENTRADAS;entrada++)
+    {
+    cad += "<TR class=\"modo2\">"; 
+    cad += "<TD>" + String(entrada) + "</TD>";
+    cad += "<TD>" + String(Entradas.nombreEntrada(entrada)) + "</TD>";  
+    cad += "<TD>" + String(Entradas.entradaConfigurada(entrada)) + "</TD>";
+    cad += "<TD>" + String(Entradas.tipoEntrada(entrada)) + "</TD>";
+    cad += "<TD>" + String(Entradas.pinEntrada(entrada)) + "</TD>";
+    cad += "<TD>" + String(Entradas.estadoEntrada(entrada)) + "</TD>";
+    /*
+    cad += "<TD>" + String(estadoActivoEntrada(entrada)) + "</TD>";
+    cad += "<TD>" + String(estadoFisicoEntrada(entrada)) + "</TD>";    
+    cad += "<TD>" + String(estadoEntrada(entrada)) + "</TD>";
+    cad += "<TD>" + String(nombreEstadoEntrada(entrada,estadoEntrada(entrada))) + "</TD>";
+    cad += "<TD>" + String(mensajeEstadoEntrada(entrada,estadoEntrada(entrada))) + "</TD>";
+    */
+    cad += "</TR>";     
+    }
+  cad += "</TABLE>";
+
   cad += pieHTML;
-    
-  request->send(200, "text/html", cad); 
+  request->send(200, "text/HTML", cad); 
   }
   
 /*********************************************/
@@ -490,29 +541,29 @@ void handleNotFound(AsyncWebServerRequest *request)
 void inicializaWebServer(void)
   {
   //lo inicializo aqui, despues de leer el nombre del dispositivo en la configuracion del cacharro  
-  cabeceraHTML = pagina_a + cacharro.getNombreDispositivo() + pagina_b + enlaces + pagina_c;
+  cabeceraHTML = String(FPSTR(pagina_a)) + cacharro.getNombreDispositivo() + FPSTR(pagina_b) + FPSTR(enlaces) + FPSTR(pagina_c);
 
   /*******Configuracion del Servicio Web***********/  
   //Inicializo los serivcios  
   //decalra las URIs a las que va a responder
-  serverX.on("/", HTTP_GET, handleRoot); //Responde con la identificacion del modulo
+  serverX.on("/", HTTP__GET, handleRoot); //Responde con la identificacion del modulo
+  serverX.on("/configEntradas", HTTP__GET, handleConfigEntradas); //Servicio de estdo de reles
   
-  serverX.on("/test", HTTP_GET, handleTest);  //URI de test
-  serverX.on("/restart", HTTP_GET, handleRestart);  //URI de test
-  serverX.on("/info", HTTP_GET, handleInfo);  //URI de test
+  serverX.on("/restart", HTTP__GET, handleRestart);  //URI de test
+  serverX.on("/info", HTTP__GET, handleInfo);  //URI de test
 
-  serverX.on("/particiones", HTTP_GET, handleParticiones);  //URI de test
-  serverX.on("/setNextBoot", HTTP_GET, handleSetNextBoot);
+  serverX.on("/particiones", HTTP__GET, handleParticiones);  //URI de test
+  serverX.on("/setNextBoot", HTTP__GET, handleSetNextBoot);
 
-  serverX.on("/listaFicheros", HTTP_GET, handleListaFicheros);  //URI de leer fichero
-  serverX.on("/creaFichero", HTTP_GET, handleCreaFichero);  //URI de crear fichero
-  serverX.on("/borraFichero", HTTP_GET, handleBorraFichero);  //URI de borrar fichero
-  serverX.on("/leeFichero", HTTP_GET, handleLeeFichero);  //URI de leer fichero
-  serverX.on("/manageFichero", HTTP_GET, handleManageFichero);  //URI de leer fichero
+  serverX.on("/listaFicheros", HTTP__GET, handleListaFicheros);  //URI de leer fichero
+  serverX.on("/creaFichero", HTTP__GET, handleCreaFichero);  //URI de crear fichero
+  serverX.on("/borraFichero", HTTP__GET, handleBorraFichero);  //URI de borrar fichero
+  serverX.on("/leeFichero", HTTP__GET, handleLeeFichero);  //URI de leer fichero
+  serverX.on("/manageFichero", HTTP__GET, handleManageFichero);  //URI de leer fichero
 
   //upload de ficheros
-  serverX.on("/upload", HTTP_GET, [](AsyncWebServerRequest *request) {request->redirect("upload.html");});
-  serverX.on("/upload", HTTP_POST, [](AsyncWebServerRequest *request) {
+  serverX.on("/upload", HTTP__GET, [](AsyncWebServerRequest *request) {request->redirect("upload.html");});
+  serverX.on("/upload", HTTP__POST, [](AsyncWebServerRequest *request) {
         request->send(200);
       }, handleUpload);
 

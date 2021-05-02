@@ -1,0 +1,208 @@
+Processing esp32dev (platform: espressif32; board: esp32cam; framework: arduino)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32cam.html
+PLATFORM: Espressif 32 (3.2.0) > AI Thinker ESP32-CAM
+HARDWARE: ESP32 240MHz, 320KB RAM, 2.50MB Flash
+DEBUG: Current (esp-prog) External (esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES:
+ - framework-arduinoespressif32 3.10006.210326 (1.0.6)
+ - tool-esptoolpy 1.30000.201119 (3.0.0)
+ - tool-openocd-esp32 2.1000.20201202 (10.0)
+ - toolchain-xtensa32 2.50200.97 (5.2.0)
+LDF: Library Dependency Finder -> http://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ deep, Compatibility ~ soft
+Found 37 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- <SPIFFS> 1.0
+|   |-- <FS> 1.0
+|-- <FS> 1.0
+|-- <WiFi> 1.0
+|-- <ArduinoJson> 5.13.5
+|-- <ArduinoOTA> 1.0
+|   |-- <ESPmDNS> 1.0
+|   |   |-- <WiFi> 1.0
+|   |-- <Update> 1.0
+|   |-- <WiFi> 1.0
+|-- <WiFiClientSecure> 1.0
+|   |-- <WiFi> 1.0
+|-- <PubSubClient> 2.7
+|-- <ESP Async WebServer> 1.2.3
+|   |-- <AsyncTCP> 1.1.1
+|   |-- <ArduinoJson> 5.13.5
+|   |-- <FS> 1.0
+|   |-- <WiFi> 1.0
+|-- <ESPAsyncWiFiManager> 0.22
+|   |-- <DNSServer> 1.1.0
+|   |   |-- <WiFi> 1.0
+|   |-- <ESP Async WebServer> 1.2.3
+|   |   |-- <AsyncTCP> 1.1.1
+|   |   |-- <ArduinoJson> 5.13.5
+|   |   |-- <FS> 1.0
+|   |   |-- <WiFi> 1.0
+|   |-- <WiFi> 1.0
+|-- <Time> 1.5
+|-- <AsyncTCP> 1.1.1
+|-- <SD_MMC> 1.0
+|   |-- <FS> 1.0
+|-- <WebSockets> 2.2.1
+|   |-- <WiFi> 1.0
+|   |-- <SPI> 1.0
+|   |-- <WiFiClientSecure> 1.0
+|   |   |-- <WiFi> 1.0
+Building in release mode
+Compiling .pio\build\esp32dev\src\Entradas.cpp.o
+Compiling .pio\build\esp32dev\src\FtpServer.cpp.o
+Compiling .pio\build\esp32dev\src\MQTT.cpp.o
+Compiling .pio\build\esp32dev\src\OTA.cpp.o
+Compiling .pio\build\esp32dev\src\Ordenes.cpp.o
+Compiling .pio\build\esp32dev\src\RedWifi.cpp.o
+Compiling .pio\build\esp32dev\src\SNTP.cpp.o
+Compiling .pio\build\esp32dev\src\Salidas.cpp.o
+Compiling .pio\build\esp32dev\src\Secuenciador.cpp.o
+Compiling .pio\build\esp32dev\src\ServidorWeb.cpp.o
+Compiling .pio\build\esp32dev\src\SistemaFicheros.cpp.o
+Compiling .pio\build\esp32dev\src\SistemaFicherosSD.cpp.o
+Compiling .pio\build\esp32dev\src\cacharro.cpp.o
+Compiling .pio\build\esp32dev\src\camara.cpp.o
+Compiling .pio\build\esp32dev\src\faceRecon.cpp.o
+Compiling .pio\build\esp32dev\src\main.cpp.o
+Generating partitions .pio\build\esp32dev\partitions.bin
+Compiling .pio\build\esp32dev\libd0c\FS\FS.cpp.o
+Compiling .pio\build\esp32dev\libd0c\FS\vfs_api.cpp.o
+Compiling .pio\build\esp32dev\lib9a4\SPIFFS\SPIFFS.cpp.o
+Compiling .pio\build\esp32dev\libcc7\WiFi\ETH.cpp.o
+Compiling .pio\build\esp32dev\libcc7\WiFi\WiFi.cpp.o
+Archiving .pio\build\esp32dev\libd0c\libFS.a
+Indexing .pio\build\esp32dev\libd0c\libFS.a
+Compiling .pio\build\esp32dev\libcc7\WiFi\WiFiAP.cpp.o
+Archiving .pio\build\esp32dev\lib9a4\libSPIFFS.a
+Indexing .pio\build\esp32dev\lib9a4\libSPIFFS.a
+Compiling .pio\build\esp32dev\libcc7\WiFi\WiFiClient.cpp.o
+Compiling .pio\build\esp32dev\libcc7\WiFi\WiFiGeneric.cpp.o
+Compiling .pio\build\esp32dev\libcc7\WiFi\WiFiMulti.cpp.o
+Compiling .pio\build\esp32dev\libcc7\WiFi\WiFiSTA.cpp.o
+Compiling .pio\build\esp32dev\libcc7\WiFi\WiFiScan.cpp.o
+Compiling .pio\build\esp32dev\libcc7\WiFi\WiFiServer.cpp.o
+Compiling .pio\build\esp32dev\libcc7\WiFi\WiFiUdp.cpp.o
+Archiving .pio\build\esp32dev\libe51\libArduinoJson.a
+Indexing .pio\build\esp32dev\libe51\libArduinoJson.a
+Compiling .pio\build\esp32dev\lib91b\ESPmDNS\ESPmDNS.cpp.o
+Compiling .pio\build\esp32dev\libb36\Update\HttpsOTAUpdate.cpp.o
+Compiling .pio\build\esp32dev\libb36\Update\Updater.cpp.o
+Archiving .pio\build\esp32dev\libcc7\libWiFi.a
+Indexing .pio\build\esp32dev\libcc7\libWiFi.a
+Compiling .pio\build\esp32dev\lib508\ArduinoOTA\ArduinoOTA.cpp.o
+Archiving .pio\build\esp32dev\libb36\libUpdate.a
+Compiling .pio\build\esp32dev\lib24c\WiFiClientSecure\WiFiClientSecure.cpp.o
+Indexing .pio\build\esp32dev\libb36\libUpdate.a
+Compiling .pio\build\esp32dev\lib24c\WiFiClientSecure\ssl_client.cpp.o
+Archiving .pio\build\esp32dev\lib91b\libESPmDNS.a
+Indexing .pio\build\esp32dev\lib91b\libESPmDNS.a
+Compiling .pio\build\esp32dev\lib10e\PubSubClient\PubSubClient.cpp.o
+Archiving .pio\build\esp32dev\lib508\libArduinoOTA.a
+Indexing .pio\build\esp32dev\lib508\libArduinoOTA.a
+Compiling .pio\build\esp32dev\lib9ed\AsyncTCP\AsyncTCP.cpp.o
+Archiving .pio\build\esp32dev\lib24c\libWiFiClientSecure.a
+Indexing .pio\build\esp32dev\lib24c\libWiFiClientSecure.a
+Compiling .pio\build\esp32dev\lib36d\ESPAsyncWebServer\AsyncEventSource.cpp.o
+Compiling .pio\build\esp32dev\lib36d\ESPAsyncWebServer\AsyncWebSocket.cpp.o
+Archiving .pio\build\esp32dev\lib10e\libPubSubClient.a
+Indexing .pio\build\esp32dev\lib10e\libPubSubClient.a
+Compiling .pio\build\esp32dev\lib36d\ESPAsyncWebServer\SPIFFSEditor.cpp.o
+Archiving .pio\build\esp32dev\lib9ed\libAsyncTCP.a
+Indexing .pio\build\esp32dev\lib9ed\libAsyncTCP.a
+Compiling .pio\build\esp32dev\lib36d\ESPAsyncWebServer\WebAuthentication.cpp.o
+Compiling .pio\build\esp32dev\lib36d\ESPAsyncWebServer\WebHandlers.cpp.o
+Compiling .pio\build\esp32dev\lib36d\ESPAsyncWebServer\WebRequest.cpp.o
+Compiling .pio\build\esp32dev\lib36d\ESPAsyncWebServer\WebResponses.cpp.o
+Compiling .pio\build\esp32dev\lib36d\ESPAsyncWebServer\WebServer.cpp.o
+Compiling .pio\build\esp32dev\liba18\DNSServer\DNSServer.cpp.o
+Compiling .pio\build\esp32dev\lib4b8\ESPAsyncWiFiManager\ESPAsyncWiFiManager.cpp.o
+Compiling .pio\build\esp32dev\libc08\Time\DateStrings.cpp.o
+Archiving .pio\build\esp32dev\liba18\libDNSServer.a
+Indexing .pio\build\esp32dev\liba18\libDNSServer.a
+Compiling .pio\build\esp32dev\libc08\Time\Time.cpp.o
+Compiling .pio\build\esp32dev\libdf3\SD_MMC\SD_MMC.cpp.o
+Archiving .pio\build\esp32dev\lib36d\libESPAsyncWebServer.a
+Indexing .pio\build\esp32dev\lib36d\libESPAsyncWebServer.a
+Compiling .pio\build\esp32dev\lib566\SPI\SPI.cpp.o
+Archiving .pio\build\esp32dev\lib566\libSPI.a
+Indexing .pio\build\esp32dev\lib566\libSPI.a
+lib\ESPAsyncWiFiManager\ESPAsyncWiFiManager.cpp: In member function 'void AsyncWiFiManager::scan()':
+lib\ESPAsyncWiFiManager\ESPAsyncWiFiManager.cpp:315:16: warning: unused variable 'res' [-Wunused-variable]
+           bool res=WiFi.getNetworkInfo(i, wifiSSIDs[i].SSID, wifiSSIDs[i].encryptionType, wifiSSIDs[i].RSSI, wifiSSIDs[i].BSSID, wifiSSIDs[i].channel);
+                ^
+Compiling .pio\build\esp32dev\libd63\arduinoWebSockets-master\SocketIOclient.cpp.o
+Archiving .pio\build\esp32dev\libc08\libTime.a
+Indexing .pio\build\esp32dev\libc08\libTime.a
+Compiling .pio\build\esp32dev\libd63\arduinoWebSockets-master\WebSockets.cpp.o
+Archiving .pio\build\esp32dev\lib4b8\libESPAsyncWiFiManager.a
+Indexing .pio\build\esp32dev\lib4b8\libESPAsyncWiFiManager.a
+Compiling .pio\build\esp32dev\libd63\arduinoWebSockets-master\WebSocketsClient.cpp.o
+Archiving .pio\build\esp32dev\libdf3\libSD_MMC.a
+Indexing .pio\build\esp32dev\libdf3\libSD_MMC.a
+Compiling .pio\build\esp32dev\libd63\arduinoWebSockets-master\WebSocketsServer.cpp.o
+Compiling .pio\build\esp32dev\libd63\arduinoWebSockets-master\libb64\cdecode.c.o
+Compiling .pio\build\esp32dev\libd63\arduinoWebSockets-master\libb64\cencode.c.o
+Compiling .pio\build\esp32dev\libd63\arduinoWebSockets-master\libsha1\libsha1.c.o
+Archiving .pio\build\esp32dev\libFrameworkArduinoVariant.a
+Indexing .pio\build\esp32dev\libFrameworkArduinoVariant.a
+Compiling .pio\build\esp32dev\FrameworkArduino\Esp.cpp.o
+Compiling .pio\build\esp32dev\FrameworkArduino\FunctionalInterrupt.cpp.o
+Compiling .pio\build\esp32dev\FrameworkArduino\HardwareSerial.cpp.o
+Archiving .pio\build\esp32dev\libd63\libarduinoWebSockets-master.a
+Indexing .pio\build\esp32dev\libd63\libarduinoWebSockets-master.a
+Compiling .pio\build\esp32dev\FrameworkArduino\IPAddress.cpp.o
+Compiling .pio\build\esp32dev\FrameworkArduino\IPv6Address.cpp.o
+Compiling .pio\build\esp32dev\FrameworkArduino\MD5Builder.cpp.o
+Compiling .pio\build\esp32dev\FrameworkArduino\Print.cpp.o
+Compiling .pio\build\esp32dev\FrameworkArduino\Stream.cpp.o
+Compiling .pio\build\esp32dev\FrameworkArduino\StreamString.cpp.o
+Compiling .pio\build\esp32dev\FrameworkArduino\WMath.cpp.o
+Compiling .pio\build\esp32dev\FrameworkArduino\WString.cpp.o
+Compiling .pio\build\esp32dev\FrameworkArduino\base64.cpp.o
+Compiling .pio\build\esp32dev\FrameworkArduino\cbuf.cpp.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-adc.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-bt.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-cpu.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-dac.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-gpio.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-i2c.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-ledc.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-log.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-matrix.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-misc.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-psram.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-rmt.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-sigmadelta.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-spi.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-time.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-timer.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-touch.c.o
+C:\Users\jlopezt\.platformio\packages\framework-arduinoespressif32\cores\esp32\esp32-hal-spi.c: In function 'spiTransferBytesNL':
+C:\Users\jlopezt\.platformio\packages\framework-arduinoespressif32\cores\esp32\esp32-hal-spi.c:922:39: warning: initialization from incompatible pointer type [-Wincompatible-pointer-types]
+                 uint8_t * last_out8 = &result[c_longs-1];
+                                       ^
+C:\Users\jlopezt\.platformio\packages\framework-arduinoespressif32\cores\esp32\esp32-hal-spi.c:923:40: warning: initialization from incompatible pointer type [-Wincompatible-pointer-types]
+                 uint8_t * last_data8 = &last_data;
+                                        ^
+Compiling .pio\build\esp32dev\FrameworkArduino\esp32-hal-uart.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\libb64\cdecode.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\libb64\cencode.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\main.cpp.o
+Compiling .pio\build\esp32dev\FrameworkArduino\stdlib_noniso.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\wiring_pulse.c.o
+Compiling .pio\build\esp32dev\FrameworkArduino\wiring_shift.c.o
+Archiving .pio\build\esp32dev\libFrameworkArduino.a
+Indexing .pio\build\esp32dev\libFrameworkArduino.a
+Linking .pio\build\esp32dev\firmware.elf
+Retrieving maximum program size .pio\build\esp32dev\firmware.elf
+Checking size .pio\build\esp32dev\firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+Error: The program size (3078666 bytes) is greater than maximum allowed (2883584 bytes)
+RAM:   [==        ]  18.7% (used 61248 bytes from 327680 bytes)
+*** [checkprogsize] Explicit exit, status 1
+Flash: [==========]  106.8% (used 3078666 bytes from 2883584 bytes)
+======================================================================================== [FAILED] Took 67.24 seconds ========================================================================================
+The terminal process "C:\Users\jlopezt\.platformio\penv\Scripts\platformio.exe 'run'" terminated with exit code: 1.
