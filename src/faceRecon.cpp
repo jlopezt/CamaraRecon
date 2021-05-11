@@ -47,7 +47,7 @@
 #include "faceRecon.h"
 #include "fd_forward.h"
 #include "fr_forward.h"
-#include "fr_flash.h"
+//#include "fr_flash.h"
 #include "camara.h"
 
 //Adicionales por Streamming
@@ -186,7 +186,7 @@ void faceRecon_init(boolean debug)
     //Inicializa la lista de caras
     face_id_name_init(&st_face_list, FACE_ID_SAVE_NUMBER, ENROLL_CONFIRM_TIMES);
     //Carga desde la memoria flash
-    read_face_id_from_flash_with_name(&st_face_list);
+    //read_face_id_from_flash_with_name(&st_face_list);
     }
 
   Serial.printf("Intervalo: %lu\nconfirm_times: %i\nLeidas %i caras\n",intervaloReconocimiento,st_face_list.confirm_times, st_face_list.count);  
@@ -206,13 +206,14 @@ boolean recuperaDatosCaras(boolean debug)
 
   if (debug) Serial.println("Recupero configuracion de archivo...");
   
-  if(!SistemaFicheros.leeFichero(FACE_RECON_CONFIG_FILE, cad)) 
-    {
-    //Confgiguracion por defecto
-    Serial.printf("No existe fichero de configuracion de Caras\n");
-    return false; 
-    }      
-    
+  if(!SistemaFicherosSD.leeFichero(FACE_RECON_CONFIG_FILE_SD, cad)) {
+    //if(!SistemaFicheros.leeFichero(FACE_RECON_CONFIG_FILE, cad)) {
+      //Confgiguracion por defecto
+      Serial.printf("No existe fichero de configuracion de Caras\n");
+      return false; 
+      //}      
+  }
+
   return parseaConfiguracionCaras(cad);
   }
 
@@ -236,7 +237,7 @@ boolean parseaConfiguracionCaras(String contenido)
   json.printTo(Serial);
   if (!json.success()) return false;
         
-  Serial.println("parsed json");
+  Serial.println("\nparsed json");
 //******************************Parte especifica del json a leer********************************
   uint8_t confirm_times=ENROLL_CONFIRM_TIMES;
   if (json.containsKey("confirm_times")) confirm_times=json["confirm_times"]; 
@@ -323,7 +324,8 @@ boolean parseaConfiguracionCaras(String contenido)
     new_node->id_vec->n=cara["n"];//doy valor a n
     new_node->id_vec->stride=cara["stride"];//doy valor a stride
     new_node->id_vec->item=(fptp_t *)malloc(FACE_ID_SIZE * sizeof(float));
-    SistemaFicheros.leeFicheroBin(String("/")+String(new_node->id_name)+String(".bin"),(uint8_t *)new_node->id_vec->item,0,(uint16_t)(FACE_ID_SIZE * sizeof(float)));//doy valor a item
+    //SistemaFicheros.leeFicheroBin(String("/")+String(new_node->id_name)+String(".bin"),(uint8_t *)new_node->id_vec->item,0,(uint16_t)(FACE_ID_SIZE * sizeof(float)));//doy valor a item
+    SistemaFicherosSD.leeFicheroBin(String("/caras/")+String(new_node->id_name)+String(".bin"),(uint8_t *)new_node->id_vec->item,0,(uint16_t)(FACE_ID_SIZE * sizeof(float)));//doy valor a item
 
     //Enlazo el nodo a la lista
     if (NULL == st_face_list.head)
@@ -432,8 +434,10 @@ boolean salvar_lista_face_id_a_fichero(face_id_name_list *lista, String ficheroC
     nodo["n"] = matrix->n;
     nodo["stride"] = matrix->stride;
 
-    String nombreFicheroBin=String("/")+String(cara->id_name)+String(".bin");
-    SistemaFicheros.salvaFicheroBin(nombreFicheroBin,nombreFicheroBin+String(".bak"),(uint8_t *)matrix->item,FACE_ID_SIZE * (uint16_t)sizeof(float));
+    //String nombreFicheroBin=String("/")+String(cara->id_name)+String(".bin");
+    //SistemaFicheros.salvaFicheroBin(nombreFicheroBin,nombreFicheroBin+String(".bak"),(uint8_t *)matrix->item,FACE_ID_SIZE * (uint16_t)sizeof(float));
+    String nombreFicheroBin=String("/caras/")+String(cara->id_name)+String(".bin");
+    SistemaFicherosSD.salvaFicheroBin(nombreFicheroBin,nombreFicheroBin+String(".bak"),(uint8_t *)matrix->item,FACE_ID_SIZE * (uint16_t)sizeof(float));
 
     cara = cara->next;//paso a la siguiente cara de la lista
     }
@@ -443,7 +447,7 @@ boolean salvar_lista_face_id_a_fichero(face_id_name_list *lista, String ficheroC
   //Salvo el fichero de configuracion
   String cad;
   root.printTo(cad);
-  if(!SistemaFicheros.salvaFichero(ficheroConfig,ficheroConfigBak,cad)) return false;
+  if(!SistemaFicherosSD.salvaFichero(ficheroConfig,ficheroConfigBak,cad)) return false;
 
   return true;
 }  
@@ -622,7 +626,8 @@ void reconocimientoFacial(boolean debug)
           if (g_state == START_ENROLL)
             {
             estadoReconocimiento=CAPTURANDO_CARA;  
-            int left_sample_face = enroll_face_id_to_flash_with_name(&st_face_list, face_id_x, st_name.enroll_name);
+            //int left_sample_face = enroll_face_id_to_flash_with_name(&st_face_list, face_id_x, st_name.enroll_name);
+            int left_sample_face = enroll_face_with_name(&st_face_list, face_id_x, st_name.enroll_name);
             
             mensajeWS=" " + String(ENROLL_CONFIRM_TIMES - left_sample_face);
             /*
@@ -743,7 +748,8 @@ static void send_face_list(void)
 /**********************************************/
 void delete_all_faces(void)
   {
-  delete_face_all_in_flash_with_name(&st_face_list);
+  //delete_face_all_in_flash_with_name(&st_face_list);
+  delete_face_all_with_name(&st_face_list);
   enviarWSTXT("delete_faces");
   Serial.println("Enviado delete_faces");
   }

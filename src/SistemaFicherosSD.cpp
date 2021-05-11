@@ -189,7 +189,8 @@ void testFileIO(fs::FS &fs, const char * path)
 /* Inicializa el sistema de ficheros del modulo */
 /************************************************/
 boolean SistemaFicherosSDClass::inicializaFicheros(int debug)
-  {
+  {int i=1;
+    Serial.printf("Paso %i\n",i++);
   //inicializo el sistema de ficheros de la tarjeta SD
   if (!SD_MMC.begin(MONTAJE_SD))
     {
@@ -197,24 +198,32 @@ boolean SistemaFicherosSDClass::inicializaFicheros(int debug)
     return (false);
     }
 
+    Serial.printf("Paso %i\n",i++);
   uint8_t cardType = SD_MMC.cardType();
 
+    Serial.printf("Paso %i\n",i++);
   if(cardType == CARD_NONE)
     {
     Serial.println("Tarjeta SD_MMC no detectada");
     return false;
     }
 
+    Serial.printf("Paso %i\n",i++);
   Serial.print("Tipo de tarjeta SD_MMC: ");
   if(cardType == CARD_MMC) Serial.println("MMC");
   else if(cardType == CARD_SD) Serial.println("SDSC");
   else if(cardType == CARD_SDHC) Serial.println("SDHC");
   else Serial.println("DESCONOCIDO");
 
-  uint64_t cardSize = SD_MMC.cardSize() / (1024 * 1024);
-  Serial.printf("Tamaño de la tarjeta SD_MMC: %lluMB\n", cardSize);
+    Serial.printf("Paso %i\n",i++);
+  //uint64_t cardSize = SD_MMC.cardSize() / (1024 * 1024);
+  //Serial.printf("Tamaño de la tarjeta SD_MMC: %lluMB\n", cardSize);
+  Serial.printf("Tamaño total: %lluMB\n", SD_MMC.totalBytes() / (1024 * 1024));
+  Serial.printf("Tamaño utilizado: %lluMB\n", SD_MMC.usedBytes() / (1024 * 1024));
 
-  listDir(SD_MMC, "/", 0);
+    Serial.printf("Paso %i\n",i++);
+  listDir(SD_MMC, "/", 2);
+  /*
   createDir(SD_MMC, "/mydir");
   listDir(SD_MMC, "/", 0);
   removeDir(SD_MMC, "/mydir");
@@ -225,10 +234,10 @@ boolean SistemaFicherosSDClass::inicializaFicheros(int debug)
   deleteFile(SD_MMC, "/foo.txt");
   renameFile(SD_MMC, "/hello.txt", "/foo.txt");
   readFile(SD_MMC, "/foo.txt");
-  testFileIO(SD_MMC, "/test.txt");
+  testFileIO(SD_MMC, "/test.txt");  
   Serial.printf("Total space: %lluMB\n", SD_MMC.totalBytes() / (1024 * 1024));
   Serial.printf("Used space: %lluMB\n", SD_MMC.usedBytes() / (1024 * 1024));    
-
+  */
   return (true);
 }
 
@@ -475,3 +484,89 @@ uint16_t SistemaFicherosSDClass::tamanoFichero(String nombreFichero)
 
 //Declaro la instancia unica
 SistemaFicherosSDClass SistemaFicherosSD; 
+
+
+/************************************************/
+/* Devuelve el nombre del direcotrio del        */
+/* fichro que se pasa como parametro            */
+/************************************************/
+String SistemaFicherosSDClass::directorioFichero(String nombreFichero)
+  {
+  if (!nombreFichero.startsWith("/")) nombreFichero="/" + nombreFichero;
+  String cad=nombreFichero.substring(0,nombreFichero.lastIndexOf("/"));
+  return(cad);
+  }
+
+/************************************************/
+/* Devuelve si un nombre de fichero incluye     */
+/* un directorio por que encuentre mas de una / */
+/************************************************/
+boolean SistemaFicherosSDClass::esDirectorio(String nombre)
+  {
+  if(nombre.startsWith("/")) nombre=nombre.substring(1);//si empieza por / se lo quito
+
+  if(nombre.indexOf("/")!=-1) return true;
+  return false;
+  }
+
+/************************************************/
+/* Recupera los ficheros almacenados en el      */
+/* dispositivo. Devuelve una cadena separada    */
+/* por SEPARADOR                                */
+/************************************************/
+String SistemaFicherosSDClass::listadoFicheros(String prefix)
+  {   
+  String salida="";
+
+  if(!prefix.startsWith("/")) prefix="/" + prefix;
+
+  const size_t capacity = 2*JSON_ARRAY_SIZE(15) + JSON_OBJECT_SIZE(31);
+  DynamicJsonBuffer jsonBuffer(capacity);
+
+  JsonObject& json = jsonBuffer.createObject();
+  json["padre"] = prefix;
+
+  JsonArray& subdirectorios = json.createNestedArray("subdirectorios");
+  JsonArray& ficheros = json.createNestedArray("ficheros");
+
+  //File root = SPIFFS.open(prefix);
+  File root = SD_MMC.open(prefix);
+  File file = root.openNextFile();
+
+  while(file)
+    {
+    String fichero=String(file.name());
+    //Si el nombre incluye el prefix, se lo quito
+    uint8_t inicio=(fichero.indexOf(prefix)==-1?0:fichero.indexOf(prefix));
+    fichero=fichero.substring(inicio+prefix.length());
+
+    //if(esDirectorio(fichero)) 
+    if(file.isDirectory())
+      {
+      //verifico que el directorio no este ya en la lista
+      boolean existe=false;
+      String subdir=fichero.substring(0,fichero.indexOf("/"));
+      for(uint8_t i=0;i<subdirectorios.size();i++)
+        {
+        if(subdir==subdirectorios[i]) 
+          {
+          existe=true;
+          break;
+          }
+        }
+      if(!existe) subdirectorios.add(fichero.substring(0,fichero.indexOf("/")));
+      }
+    else 
+      {
+      JsonObject& fichero_nuevo = ficheros.createNestedObject();
+      fichero_nuevo["nombre"] = fichero;
+      fichero_nuevo["tamano"] = file.size();
+      fichero_nuevo["fechaEdicion"] = reloj.horaYfecha(file.getLastWrite());
+      }
+
+    file = root.openNextFile();
+    }   
+  json.printTo(salida);
+  return (salida);
+  }  
+

@@ -8,7 +8,7 @@
 
 //Defines generales
 #define NOMBRE_FAMILIA   "Camara reconocimiento facial"
-#define VERSION          "1.5.0 (ESP32 2.0|Migracion C++|OTA|MQTTS|FicherosWeb|FTP|cargador|Nueva Web)"
+#define VERSION          "1.6.0"// (ESP32 2.0|Migracion C++|OTA|MQTTS|FicherosWeb|FTP|cargador|Nueva Web)"
 #define SEPARADOR        '|'
 #define SUBSEPARADOR     '#'
 #define KO               -1
@@ -34,6 +34,25 @@
 #define FACE_RECON_FACES_FILE            "/FaceReconConfig.bin"
 #define FACE_RECON_FACES_BAK_FILE        "/FaceReconConfig.bin.bak"
 
+#define GLOBAL_CONFIG_FILE_SD               "/config/Config.json"
+#define GLOBAL_CONFIG_BAK_FILE_SD           "/config/Config.json.bak"
+#define ENTRADAS_CONFIG_FILE_SD             "/config/EntradasConfig.json"
+#define ENTRADAS_CONFIG_BAK_FILE_SD         "/config/EntradasConfig.json.bak"
+#define SALIDAS_CONFIG_FILE_SD              "/config/SalidasConfig.json"
+#define SALIDAS_CONFIG_BAK_FILE_SD          "/config/SalidasConfig.json.bak"
+#define WIFI_CONFIG_FILE_SD                 "/config/WiFiConfig.json"
+#define WIFI_CONFIG_BAK_FILE_SD             "/config/WiFiConfig.json.bak"
+#define MQTT_CONFIG_FILE_SD                 "/config/MQTTConfig.json"
+#define MQTT_CONFIG_BAK_FILE_SD             "/config/MQTTConfig.json.bak"
+#define FTP_CONFIG_FILE_SD                  "/config/FTPConfig.json"
+#define FTP_CONFIG_BAK_FILE_SD              "/config/FTPConfig.json.bak"
+#define SECUENCIADOR_CONFIG_FILE_SD         "/config/SecuenciadorConfig.json"
+#define SECUENCIADOR_CONFIG_BAK_FILE_SD     "/config/SecuenciadorConfig.json.bak"
+#define FACE_RECON_CONFIG_FILE_SD           "/config/FaceReconConfig.json"
+#define FACE_RECON_CONFIG_BAK_FILE_SD       "/config/FaceReconConfig.json.bak"
+#define FACE_RECON_FACES_FILE_SD            "/config/FaceReconConfig.bin"
+#define FACE_RECON_FACES_BAK_FILE_SD        "/config/FaceReconConfig.bin.bak"
+
 //Definicion de pines
 #define MAX_PINES        7 //numero de pines disponibles para entradas y salidas
 #define MAX_ENTRADAS     4 //numero maximo de reles soportado
@@ -53,7 +72,7 @@
 /***************************** Includes *****************************/
 #include <Arduino.h>
 #include <FtpServer.h>
-#include <SistemaFicheros.h>
+//#include <SistemaFicheros.h>
 #include <SistemaFicherosSD.h>
 #include <ArduinoJson.h>
 #include <cacharro.h>

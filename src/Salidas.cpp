@@ -86,13 +86,14 @@ boolean SalidasClass::recuperaDatosSalidas(boolean debug)
 
   if (debug) Serial.println("Recupero configuracion de archivo...");
   
-  if(!SistemaFicheros.leeFichero(SALIDAS_CONFIG_FILE, cad)) 
-    {
-    //Confgiguracion por defecto
-    Serial.printf("No existe fichero de configuracion de Salidas\n");    
-    return false;
-    }      
-    
+  if(!SistemaFicherosSD.leeFichero(SALIDAS_CONFIG_FILE_SD, cad)) {
+    //if(!SistemaFicheros.leeFichero(SALIDAS_CONFIG_FILE, cad)) {
+      //Confgiguracion por defecto
+      Serial.printf("No existe fichero de configuracion de Salidas\n");    
+      return false;
+    //}      
+  }
+      
   return parseaConfiguracionSalidas(cad);
   }
 

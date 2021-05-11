@@ -365,9 +365,9 @@ void func_comando_nivelActivo(int iParametro, char* sParametro, float fParametro
 
     String cad="";
     
-    if(!SistemaFicheros.leeFichero(GLOBAL_CONFIG_FILE, cad)) Serial.println("No se pudo leer el fichero");
+    if(!SistemaFicherosSD.leeFichero(GLOBAL_CONFIG_FILE, cad)) Serial.println("No se pudo leer el fichero");
     cad=cacharro.generaJsonConfiguracionNivelActivo(cad, cacharro.getNivelActivo());
-    if(!SistemaFicheros.salvaFichero(GLOBAL_CONFIG_FILE, GLOBAL_CONFIG_BAK_FILE, cad)) Serial.println("No se pudo salvar el fichero");      
+    if(!SistemaFicherosSD.salvaFichero(GLOBAL_CONFIG_FILE, GLOBAL_CONFIG_BAK_FILE, cad)) Serial.println("No se pudo salvar el fichero");      
     }
   Serial.printf("\nNivel activo: %i\n",cacharro.getNivelActivo());  
   }  
@@ -381,7 +381,7 @@ void func_comando_IP(int iParametro, char* sParametro, float fParametro) //"IP"
 void func_comando_flist(int iParametro, char* sParametro, float fParametro)//"fexist")
   {
   String contenido="";  
-  if(SistemaFicheros.listaFicheros(contenido)) 
+  if(SistemaFicherosSD.listaFicheros(contenido)) 
     {
     contenido.replace("|","\n");
     Serial.printf("Contendio del sistema de ficheros:\n %s\n",contenido.c_str());
@@ -432,8 +432,8 @@ void func_comando_fremove(int iParametro, char* sParametro, float fParametro)//"
 
 void func_comando_format(int iParametro, char* sParametro, float fParametro)//"format")
   {     
-  if (SistemaFicheros.formatearFS()) Serial.println("Sistema de ficheros formateado");
-  else Serial.println("Error al formatear el sistema de ficheros");
+  //if (SistemaFicheros.formatearFS()) Serial.println("Sistema de ficheros formateado");
+  //else Serial.println("Error al formatear el sistema de ficheros");
   } 
 
 void func_comando_hora(int iParametro, char* sParametro, float fParametro)//"hora"    

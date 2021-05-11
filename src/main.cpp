@@ -64,10 +64,14 @@ void setup()
   //Ficheros - Lo primero para poder leer los demas ficheros de configuracion  
   if(!inicializaTFT())Serial.println("Error al inicializar el sistema de ficheros");
 */
-
+/*
   Serial.printf("\n\nInit Ficheros ---------------------------------------------------------------------\n");
   //Ficheros - Lo primero para poder leer los demas ficheros de configuracion
   if(!SistemaFicheros.inicializaFicheros(debugGlobal))Serial.println("Error al inicializar el sistema de ficheros");
+*/
+  Serial.printf("\n\nInit Ficheros SD-------------------------------------------------------------------\n");
+  //Ficheros - Lo primero para poder leer los demas ficheros de configuracion
+  if(!SistemaFicherosSD.inicializaFicheros(debugGlobal))Serial.println("Error al inicializar el sistema de ficheros SD");
 
   //Configuracion general
   Serial.printf("\n\nInit General --------------------------------------------------------------------------\n");

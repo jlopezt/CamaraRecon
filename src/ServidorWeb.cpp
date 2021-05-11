@@ -32,10 +32,18 @@ Informacion del Hw del sistema http://IP/info
 #include <OTA.h>
 #include <FS.h>     //this needs to be first, or it all crashes and burns...
 #include <SPIFFS.h>
+#include <SD_MMC.h>
 #include <Entradas.h>
 /***************************** Includes *****************************/
 
 //Prototipo de funciones
+void handleFicheros(AsyncWebServerRequest *request);
+void handleListaFicheros(AsyncWebServerRequest *request);
+void handleManageFichero(AsyncWebServerRequest *request);
+void handleLeeFichero(AsyncWebServerRequest *request);
+void handleBorraFichero(AsyncWebServerRequest *request);
+void handleCreaFichero(AsyncWebServerRequest *request);
+
 bool handleFileRead(AsyncWebServerRequest *request);
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
 
@@ -44,6 +52,9 @@ AsyncWebServer serverX(PUERTO_WEBSERVER);
 
 //Cadenas HTML precargadas
 String cabeceraHTML="";
+
+String miniCabecera=" <html><head></head><body><link rel='stylesheet' type='text/css' href='css.css'>\n";
+String miniPie="</body></html>";
 
 //version de la web propia del cacharro
 /*
@@ -58,22 +69,11 @@ String pieHTML = "</TD>\n</TR>\n<TR>\n<TD style=\"color:white; background-color:
 const char pagina_a[] PROGMEM = "<!DOCTYPE html>\n<html lang=\"es\">\n <head>\n <meta charset=\"UTF-8\">\n <TITLE>Domoticae</TITLE>\n <link rel=\"stylesheet\" type=\"text/css\" href=\"css.css\">\n </HEAD>\n <BODY>\n <table style=\"width:100%;\" cellpadding=\"10\" cellspacing=\"0\">\n  <tr style=\"height:20%; background-color:black\">\n  <th align=\"left\">\n   <span style=\"font-family:verdana;font-size:30px;color:white\">DOMOTI</span><span style=\"font-family:verdana;font-size:30px;color:red\">C</span><span style=\"font-family:verdana;font-size:30px;color:white\">AE - ";
 //en medio va el nombre_dispositivo
 const char pagina_b[] PROGMEM = "</span> \n </th>\n </tr>\n <tr style=\"height:10%;\">\n <td>";
-const char enlaces[] PROGMEM = "<table class=\"tabla\">\n	<tr class=\"modo1\">\n <td><a href=\"./\" target=\"_self\" style=\"text-decoration:none; color: black;\">Home</a></td>\n	<td><a href=\"index.html\" target=\"_self\" style=\"text-decoration:none; color: black;\">Imagen</a></td>\n	<td><a href=\"configEntradas\" target=\"_self\" style=\"text-decoration:none; color: black;\">Entradas</a></td>\n	<td><a href=\"listaFicheros\" target=\"_self\" style=\"text-decoration:none; color: black;\">Ficheros</a></td>\n		<td><a href=\"info\" target=\"_self\" style=\"text-decoration:none; color: black;\">Info</a></td>\n		<td><a href=\"particiones\" target=\"_self\" style=\"text-decoration:none; color: black;\">Particiones</a></td>\n	<td><a href=\"restart\" target=\"_self\" style=\"text-decoration:none; color: black;\">Restart</a></td>\n	</tr>\n</table>\n";
+const char enlaces[] PROGMEM = "<table class=\"tabla\">\n	<tr class=\"modo1\">\n <td><a href=\"./\" target=\"_self\" style=\"text-decoration:none; color: black;\">Home</a></td>\n	<td><a href=\"index.html\" target=\"_self\" style=\"text-decoration:none; color: black;\">Imagen</a></td>\n	<td><a href=\"configEntradas\" target=\"_self\" style=\"text-decoration:none; color: black;\">Entradas</a></td>\n	<td><a href=\"ficheros\" target=\"_self\" style=\"text-decoration:none; color: black;\">Ficheros</a></td>\n		<td><a href=\"info\" target=\"_self\" style=\"text-decoration:none; color: black;\">Info</a></td>\n		<td><a href=\"particiones\" target=\"_self\" style=\"text-decoration:none; color: black;\">Particiones</a></td>\n	<td><a href=\"restart\" target=\"_self\" style=\"text-decoration:none; color: black;\">Restart</a></td>\n	</tr>\n</table>\n";
 const char pagina_c[] PROGMEM = "</td></tr><TR style=\"height:60%\"><TD>";
 //En medio va el cuerpo de la pagina
 const char pieHTML[] PROGMEM = "</TD>\n</TR>\n<TR>\n<TD style=\"color:white; background-color:black\"><a href=\"https://domoticae.lopeztola.com\" target=\"_self\" style=\"text-decoration:none; color:white;\">domoticae-2020</a></TD>\n</TR>\n</table>\n</BODY>\n</HTML>";
 
-/*******************************************************/
-/*                                                     */ 
-/* Invocado desde Loop, gestiona las peticiones web    */
-/*                                                     */
-/*******************************************************/
-/*
-void webServer(int debug)
-  {
-  server.handleClient();  
-  }
-*/
 /************************* Gestores de las diferentes URL coniguradas ******************************/
 /*************************************************/
 /*                                               */
@@ -294,7 +294,7 @@ void handleSetNextBoot(AsyncWebServerRequest *request)
 /*  Lista los ficheros en el sistema a       */
 /*  traves de una peticion HTTP              */ 
 /*                                           */
-/*********************************************/  
+/*********************************************/  /***
 void handleListaFicheros(AsyncWebServerRequest *request)
   {
   String cad=cabeceraHTML;
@@ -360,13 +360,13 @@ void handleListaFicheros(AsyncWebServerRequest *request)
   cad += pieHTML;
   request->send(200, "text/html", cad); 
   }
-
+***/
 /*********************************************/
 /*                                           */
 /*  Crea un fichero a traves de una          */
 /*  peticion HTTP                            */ 
 /*                                           */
-/*********************************************/  
+/*********************************************/ /*** 
 void handleCreaFichero(AsyncWebServerRequest *request)
   {
   String cad=cabeceraHTML;
@@ -393,13 +393,13 @@ void handleCreaFichero(AsyncWebServerRequest *request)
   cad += pieHTML;
   request->send(200, "text/html", cad); 
   }
-
+***/
 /*********************************************/
 /*                                           */
 /*  Borra un fichero a traves de una         */
 /*  peticion HTTP                            */ 
 /*                                           */
-/*********************************************/  
+/*********************************************/  /***
 void handleBorraFichero(AsyncWebServerRequest *request)
   {
   String cad=cabeceraHTML;
@@ -425,13 +425,13 @@ void handleBorraFichero(AsyncWebServerRequest *request)
   cad += pieHTML;
   request->send(200, "text/html", cad); 
   }
-
+**/
 /*********************************************/
 /*                                           */
 /*  Lee un fichero a traves de una           */
 /*  peticion HTTP                            */ 
 /*                                           */
-/*********************************************/  
+/*********************************************/  /***
 void handleLeeFichero(AsyncWebServerRequest *request)
   {
   String cad=cabeceraHTML;
@@ -462,13 +462,13 @@ void handleLeeFichero(AsyncWebServerRequest *request)
   cad += pieHTML;
   request->send(200, "text/html", cad); 
   }
-
+***/
 /*********************************************/
 /*                                           */
 /*  Gestion de un fichero a traves de una    */
 /*  peticion HTTP                            */ 
 /*                                           */
-/*********************************************/  
+/*********************************************/  /***
 void handleManageFichero(AsyncWebServerRequest *request)
   { 
   String cad=cabeceraHTML;
@@ -506,7 +506,7 @@ void handleManageFichero(AsyncWebServerRequest *request)
   cad += pieHTML;
   request->send(200, "text/html", cad); 
   }
-
+***/
 /*********************************************/
 /*                                           */
 /*  Pagina no encontrada                     */
@@ -560,6 +560,15 @@ void inicializaWebServer(void)
   serverX.on("/borraFichero", HTTP__GET, handleBorraFichero);  //URI de borrar fichero
   serverX.on("/leeFichero", HTTP__GET, handleLeeFichero);  //URI de leer fichero
   serverX.on("/manageFichero", HTTP__GET, handleManageFichero);  //URI de leer fichero
+  serverX.on("/ficheros", HTTP__ANY, handleFicheros);  //URI de leer fichero 
+/*
+  serverX.on("/xlistaFicheros", HTTP__ANY, xhandleListaFicheros);  //URI de leer fichero  
+  serverX.on("/xcreaFichero", HTTP__ANY, xhandleCreaFichero);  //URI de crear fichero
+  serverX.on("/xborraFichero", HTTP__ANY, xhandleBorraFichero);  //URI de borrar fichero
+  serverX.on("/xleeFichero", HTTP__ANY, xhandleLeeFichero);  //URI de leer fichero
+  serverX.on("/xmanageFichero", HTTP__ANY, xhandleManageFichero);  //URI de leer fichero  
+  serverX.on("/xficheros", HTTP__ANY, xhandleFicheros);  //URI de leer fichero    
+*/
 
   //upload de ficheros
   serverX.on("/upload", HTTP__GET, [](AsyncWebServerRequest *request) {request->redirect("upload.html");});
@@ -594,16 +603,18 @@ bool handleFileRead(AsyncWebServerRequest *request)
 
   String contentType = getContentType(path);             // Get the MIME type
   String pathWithGz = path + ".gz";
-  if(SistemaFicheros.existeFichero(pathWithGz) || SistemaFicheros.existeFichero(path))
+  
+  if(SistemaFicherosSD.existeFichero(pathWithGz) || SistemaFicherosSD.existeFichero(path))
     { // If the file exists, either as a compressed archive, or normal
-    if (SistemaFicheros.existeFichero(pathWithGz)) path += ".gz";  // If there's a compressed version available, use the compressed verion
+    if (SistemaFicherosSD.existeFichero(pathWithGz)) path += ".gz";  // If there's a compressed version available, use the compressed verion
 
-    request->send(SPIFFS, path, contentType);
+    //request->send(SPIFFS, path, contentType);
+    request->send(SD_MMC, path, contentType);
 
     //Serial.printf("\tfichero enviado: %s | contentType: %s\n",path.c_str(),contentType.c_str());
     return true;
     }
-  Serial.printf("\tfichero no encontrado en SPIFFS: %s\n", path.c_str());   // If the file doesn't exist, return false
+  Serial.printf("\tfichero no encontrado en SD: %s\n", path.c_str());   // If the file doesn't exist, return false
   return false;
   }
 
@@ -677,3 +688,171 @@ void handleFileUpload()
     }
   }
 */
+
+/****************************GESTION DE FICHEROS******************************************/
+/*********************************************/
+/*                                           */
+/*  Crea un fichero a traves de una          */
+/*  peticion HTTP                            */ 
+/*  COPIADO DE ACTUADOR                      */
+/*********************************************/  
+void handleCreaFichero(AsyncWebServerRequest *request)
+  {
+  String cad="";
+  String nombreFichero="";
+  String contenidoFichero="";
+
+  if(request->hasArg("nombre") && request->hasArg("contenido")) //si existen esos argumentos
+    {
+    nombreFichero=request->arg("nombre");
+    contenidoFichero=request->arg("contenido");
+
+    if(SistemaFicherosSD.salvaFichero( nombreFichero, nombreFichero+".bak", contenidoFichero)) 
+	    {
+      String cad=SistemaFicherosSD.directorioFichero(nombreFichero);
+      request->redirect("ficheros?dir=" + cad);
+      return;
+	    }  
+    else cad += "No se pudo salvar el fichero<br>"; 
+    }
+  else cad += "Falta el argumento <nombre de fichero>"; 
+
+  request->send(200, "text/html", cad); 
+  }
+
+/*********************************************/
+/*                                           */
+/*  Borra un fichero a traves de una         */
+/*  peticion HTTP                            */ 
+/*  COPIADO DE ACTUADOR                      */
+/*********************************************/  
+void handleBorraFichero(AsyncWebServerRequest *request)
+  {
+  String nombreFichero="";
+  String contenidoFichero="";
+  String cad="";
+
+  if(request->hasArg("nombre") ) //si existen esos argumentos
+    {
+    nombreFichero=request->arg("nombre");
+
+    if(SistemaFicherosSD.borraFichero(nombreFichero)) 
+      {
+      String cad=SistemaFicherosSD.directorioFichero(nombreFichero);
+      request->redirect("ficheros?dir=" + cad);
+      return;
+      }
+    else cad += "No sepudo borrar el fichero " + nombreFichero + ".\n"; 
+    }
+  else cad += "Falta el argumento <nombre de fichero>"; 
+
+  request->send(200, "text/html", cad); 
+  }
+
+/*********************************************/
+/*                                           */
+/*  Lee un fichero a traves de una           */
+/*  peticion HTTP                            */ 
+/*  COPIADO DE ACTUADOR                      */
+/*********************************************/  
+void handleLeeFichero(AsyncWebServerRequest *request)
+  {
+  String cad="";
+  String nombreFichero="";
+  String contenido="";
+   
+  if(request->hasArg("nombre") ) //si existen esos argumentos
+    {
+    nombreFichero=request->arg("nombre");
+
+    if(SistemaFicherosSD.leeFichero(nombreFichero, contenido))
+      {
+      cad += "El fichero tiene un tama&ntilde;o de ";
+      cad += contenido.length();
+      cad += " bytes.<BR>";           
+      cad += "El contenido del fichero es:<BR>";
+      cad += "<textarea readonly=true cols=75 rows=20 name=\"contenido\">";
+      cad += contenido;
+      cad += "</textarea>";
+      cad += "<BR>";
+      }
+    else cad += "Error al abrir el fichero " + nombreFichero + "<BR>";   
+    }
+  else cad += "Falta el argumento <nombre de fichero>"; 
+
+  request->send(200, "text/html", cad); 
+  }
+
+/*********************************************/
+/*                                           */
+/*  Habilita la edicion y borrado del        */
+/*  fichero indicado, a traves de una        */
+/*  peticion HTTP                            */ 
+/*  COPIADO DE ACTUADOR                      */
+/*********************************************/ 
+void handleManageFichero(AsyncWebServerRequest *request)
+  {
+  String nombreFichero="";
+  String contenido="";
+  String cad=cabeceraHTML; //miniCabecera;
+   
+  if(request->hasArg("nombre") ) //si existen esos argumentos
+    {
+    nombreFichero=request->arg("nombre");
+
+    if(SistemaFicherosSD.leeFichero(nombreFichero, contenido))
+      {           
+      //cad += "<link rel='stylesheet' type='text/css' href='css.css'>";
+      //cad += "<style> table{border-collapse: collapse;} th, td{border: 1px solid black; padding: 5px; text-align: left;}</style>";
+
+      cad += "<form id=\"borrarFichero\" action=\"/borraFichero\">\n";
+      cad += "  <input type=\"hidden\" name=\"nombre\" value=\"" + nombreFichero + "\">\n";
+      cad += "</form>\n";
+
+      cad += "<form id=\"salvarFichero\" action=\"creaFichero\" target=\"_self\">";
+      cad += "  <input type=\"hidden\" name=\"nombre\" value=\"" + nombreFichero + "\">";
+      cad += "</form>\n";
+
+      cad += "<div id=\"contenedor\" style=\"width:900px;\">\n";
+      cad += "  <p align=\"center\" style=\"margin-top: 0px;font-size: 16px; background-color: #83aec0; background-repeat: repeat-x; color: #FFFFFF; font-family: Trebuchet MS, Arial; text-transform: uppercase;\">Fichero: " + nombreFichero + "(" + contenido.length() + ")</p>\n";
+      cad += "  <BR>\n";
+      cad += "  <button form=\"salvarFichero\" style=\"float: left;\" type=\"submit\" value=\"Submit\">Salvar</button>\n";
+      cad += "  <button form=\"borrarFichero\" style=\"float: right;\" type=\"submit\" value=\"Submit\">Borrar</button>\n";
+      cad += "  <BR><BR>\n";
+      cad += "  <textarea form=\"salvarFichero\" cols=120 rows=45 name=\"contenido\">" + contenido + "</textarea>\n";
+      cad += "</div>\n";
+      }
+    else cad += "Error al abrir el fichero " + nombreFichero + "<BR>";
+    }
+  else cad += "Falta el argumento <nombre de fichero>"; 
+
+  cad += pieHTML;//miniPie;
+  request->send(200, "text/html", cad); 
+  }
+
+/*********************************************/
+/*                                           */
+/*  Lista los ficheros en el sistema a       */
+/*  traves de una peticion HTTP              */ 
+/*  COPIADO DE ACTUADOR                      */
+/*********************************************/  
+void handleListaFicheros(AsyncWebServerRequest *request)
+  {
+  String prefix="/";  
+
+  if(request->hasArg("dir")) prefix=request->arg("dir");
+
+  request->send(200,"text/json",SistemaFicherosSD.listadoFicheros(prefix));
+  }
+
+/*  COPIADO DE ACTUADOR                      */
+void handleFicheros(AsyncWebServerRequest *request)
+  {
+  String prefix="/";  
+
+  if(request->hasArg("dir")) prefix=request->arg("dir");
+
+  request->redirect("ficheros.html?dir=" + prefix);
+  }
+  
+/****************************FIN DE GESTION DE FICHEROS******************************************/

@@ -84,6 +84,7 @@ class relojClass
   int anno();
   String getHora(void);
   String getFecha(void);
+  String horaYfecha(time_t entrada);
 };
 
 extern relojClass reloj;

@@ -34,6 +34,10 @@ class SistemaFicherosSDClass
     boolean existeFichero(String nombre);
 
     boolean listaFicheros(String &contenido);
+
+    String directorioFichero(String nombreFichero);
+    boolean esDirectorio(String nombre);
+    String listadoFicheros(String prefix);
   };
 
 extern SistemaFicherosSDClass SistemaFicherosSD;

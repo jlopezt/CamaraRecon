@@ -1,12 +1,8 @@
-#Particiones para la ESP32-CAM reconocimiento facial
-# fr para alojar las caras, dimensionado para 10 caras
-# spiffs ajustado a 60kB para que quepa el cargador y la aplicacion
-#
-# Name,    Type, SubType, Offset,   Size,    Flags
-  nvs,     data, nvs,     0x009000, 0x005000,
-  otadata, data, ota,     0x00E000, 0x002000,
-  Loader,  app,  ota_0,   0x010000, 0x0E0000,
-  app,     app,  ota_1,   0x0F0000, 0x2F0000,
-  fr,      32,   32,      0x3E0000, 0x006000,
-  eeprom,  data, 0x99,    0x3E6000, 0x001000,
-  spiffs,  data, spiffs,  0x3E7000, 0x019000,
+# Name, Type, SubType, Offset, Size, Flags
+nvs, data, nvs, 0x009000, 0x005000, 
+otadata, data, ota, 0x00E000, 0x002000, 
+Loader, app, ota_0, 0x010000, 0x0E0000, 
+app, app, ota_1, 0x0F0000, 0x2FC800, 
+fr, 32, 32, 0x3EC800, 0x006000, 
+eeprom, data, 0x99, 0x3F2800, 0x001000, 
+spiffs, data, spiffs, 0x3F3800, 0x00C800, 

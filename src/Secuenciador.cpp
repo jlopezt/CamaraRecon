@@ -55,12 +55,13 @@ boolean secuenciadorClass::recuperaDatosSecuenciador(boolean debug)
 
   if (debug) Serial.println("Recupero configuracion de archivo...");
   
-  if(!SistemaFicheros.leeFichero(SECUENCIADOR_CONFIG_FILE, cad)) 
-    {
-    //Confgiguracion por defecto
-    Serial.printf("No existe fichero de configuracion del secuenciador\n");
-    return false;
-    }      
+  if(!SistemaFicherosSD.leeFichero(SECUENCIADOR_CONFIG_FILE_SD, cad)) {
+    //if(!SistemaFicheros.leeFichero(SECUENCIADOR_CONFIG_FILE, cad)) {
+      //Confgiguracion por defecto
+      Serial.printf("No existe fichero de configuracion del secuenciador\n");
+      return false;
+    //}      
+  }
     
   return parseaConfiguracionSecuenciador(cad);
   }

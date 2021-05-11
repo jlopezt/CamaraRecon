@@ -41,9 +41,19 @@ void miSaveConfigCallback(void)
   Serial.print("Password : ");
   Serial.println(WiFi.psk());   
 
-  if(!SistemaFicheros.leeFichero(WIFI_CONFIG_FILE, cad)) Serial.println("No se pudo leer el fichero");
+  if(!SistemaFicherosSD.leeFichero(WIFI_CONFIG_FILE_SD, cad)) {
+      //if(!SistemaFicheros.leeFichero(WIFI_CONFIG_FILE, cad)) {
+      Serial.println("No se pudo leer el fichero");
+      //}
+  }
   cad=RedWifi.generaJsonConfiguracionWifi(cad, WiFi.SSID(),WiFi.psk());
-  if(!SistemaFicheros.salvaFichero(WIFI_CONFIG_FILE, WIFI_CONFIG_BAK_FILE, cad)) Serial.println("No se pudo salvar el fichero");  
+  
+  if(!SistemaFicherosSD.salvaFichero(WIFI_CONFIG_FILE_SD, WIFI_CONFIG_BAK_FILE_SD, cad)) {
+    //if(!SistemaFicheros.salvaFichero(WIFI_CONFIG_FILE, WIFI_CONFIG_BAK_FILE, cad)) {
+      Serial.println("No se pudo salvar el fichero");  
+    //}
+  }
+
   Serial.println("---------------------Fin salvando configuracion---------------");
   
   ///conectado=true;
@@ -53,23 +63,20 @@ void miSaveConfigCallback(void)
 /* Recupera los datos de configuracion          */
 /* del archivo de Wifi                          */
 /************************************************/
-boolean RedWifiClass::recuperaDatosWiFi(boolean debug)
-  {
+boolean RedWifiClass::recuperaDatosWiFi(boolean debug) {
   String cad="";
   if (debug) Serial.println("Recupero configuracion de archivo...");
    
-  if(!SistemaFicheros.leeFichero(WIFI_CONFIG_FILE, cad)) 
-    {
-    //Confgiguracion por defecto
-    Serial.printf("No existe fichero de configuracion WiFi\n");
-    //cad="{\"wifi\": [ {\"ssid\": \"BASE0\" ,\"password\": \"11223344556677889900abcdef\"}, {\"ssid\": \"BASE1\" ,\"password\": \"11223344556677889900abcdef\"}, {\"ssid\": \"BASE2\" ,\"password\": \"11223344556677889900abcdef\"}, {\"ssid\": \"BASE-1\",\"password\": \"11223344556677889900abcdef\"}]}";
-    //cad="{\"wifiIP\": \"0.0.0.0\",\"wifiGW\":\"0.0.0.0\",\"wifiNet\": \"0.0.0.0\",\"wifiDNS1\":\"0.0.0.0\",\"wifiDNS2\": \"0.0.0.0\",\"wifi\": []}";
-    //if(SistemaFicheros.salvaFichero(WIFI_CONFIG_FILE, WIFI_CONFIG_BAK_FILE, cad)) Serial.printf("Fichero de configuracion WiFi creado por defecto\n");
-    return false;
-    }
+  if(!SistemaFicherosSD.leeFichero(WIFI_CONFIG_FILE_SD, cad)) {
+    //if(!SistemaFicheros.leeFichero(WIFI_CONFIG_FILE, cad)) {
+      //Confgiguracion por defecto
+      Serial.printf("No existe fichero de configuracion WiFi\n");
+      return false;
+    //}
+  }
 
   return(parseaConfiguracionWifi(cad));
-  }
+}
 
 /*********************************************/
 /* Parsea el json leido del fichero de       */

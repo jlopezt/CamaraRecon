@@ -62,13 +62,14 @@ int EntradasClass::recuperaDatosEntradas(boolean debug)
 
   if (debug) Serial.println("Recupero configuracion de archivo...");
   
-  if(!SistemaFicheros.leeFichero(ENTRADAS_CONFIG_FILE, cad)) 
-    {
-    //Confgiguracion por defecto
-    Serial.printf("No existe fichero de configuracion de Entradas\n");    
-    return false;
-    }      
-    
+  if(!SistemaFicherosSD.leeFichero(ENTRADAS_CONFIG_FILE_SD, cad)) {
+    //if(!SistemaFicheros.leeFichero(ENTRADAS_CONFIG_FILE, cad)) {
+      //Confgiguracion por defecto
+      Serial.printf("No existe fichero de configuracion de Entradas\n");    
+      return false;
+      //}      
+  }
+
   return parseaConfiguracionEntradas(cad);
   }
 
