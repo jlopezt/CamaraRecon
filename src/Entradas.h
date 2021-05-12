@@ -1,6 +1,6 @@
 /*****************************************/
 /*                                       */
-/*  Control de entradas digitales        */
+/*  Control de entradas                  */
 /*                                       */
 /*****************************************/
 
@@ -10,64 +10,36 @@
 /***************************** Defines *****************************/
 
 /***************************** Includes *****************************/
+#include <entrada.h>
 #include <Global.h>
 /***************************** Includes *****************************/
 
-class entrada
-  {
-  private:
-  int8_t configurada;
-  String nombre;
-  int8_t estado;
-  String tipo;        //Puede ser INPUT, INPUT_PULLUP, No valido!!-->INPUT_PULLDOWN
-  int8_t pin;
-        
+class Entradas{
+  private:    
+    Entrada* entrada;//definicion de los tipos de datos para las entradas
+    uint8_t numeroEntradas;
+
+    boolean recuperaDatos(int debug);// Lee el fichero de configuracion de las entradas o genera conf por defecto
+    boolean parseaConfiguracion(String contenido);//* Parsea el json leido del fichero de configuracio de las entradas
+    void configura(uint8_t id, String _nombre, String _tipo, int8_t _pin, int8_t _estadoActivo, String _nombres[2], String _mensajes[2]);
+
   public:
-  void inicializaEntrada(void);
-  void inicializaEntrada(int8_t conf, String nom, int8_t est, String tip, int8_t p);
+    //Constructor
+    Entradas(void);
 
-  int8_t getConfigurada(void) {return configurada;};
-  void setConfigurada(int8_t config) {configurada=config;};
+    //Configuracion
+    void inicializa(void);// Inicializa los valores de los registros de las entradas y recupera la configuracion
+    //get
+    int getNumEntradas(void){return numeroEntradas;}//Devuelve el numero de entradas configuradas
+    Entrada getEntrada(uint8_t id){return entrada[id];}
 
-  String getNombre(void) {return nombre;};
-  void setNombre(String name) {nombre=name;};
+    //set
+    void actualiza(bool debug);//Lee el estado de las entradas
 
-  int8_t getEstado(void) {return estado;};
-  void setEstado(int8_t est) {estado=est;};
+    //estado en json
+    String generaJsonEstado(boolean filtro);//Devuelve el estado de las entradas en formato json
+    String generaJsonEstado(void);
+};
 
-  String getTipo(void) {return tipo;};
-  void setTipo(String tip) {tipo=tip;};
-
-  int8_t getPin(void) {return pin;};
-  void setPin(int8_t p) {pin=p;};
-  };
-
-class EntradasClass
-  {
-  private:
-  entrada entradas[MAX_ENTRADAS];  
-
-  public:    
-  //funciones de configuracion
-  void inicializaEntradas(void);
-  int recuperaDatosEntradas(boolean debug);
-  boolean parseaConfiguracionEntradas(String contenido);
-  int entradasConfiguradas(void);
-
-  //funciones por entrada. Se entra en el array por id
-  int8_t estadoEntrada(int8_t id);
-  String nombreEntrada(int8_t id);
-  int8_t entradaConfigurada(int8_t id);
-  String tipoEntrada(int8_t id);
-  int8_t pinEntrada(int8_t id);
-
-  //funciones globales para todas las entradas
-  void consultaEntradas(bool debug);
-  String generaJsonEstadoEntradas(void);
-  };
-
-  extern EntradasClass Entradas;
-
-#endif  
-
-
+extern Entradas entradas;
+#endif

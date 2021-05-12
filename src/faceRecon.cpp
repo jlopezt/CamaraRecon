@@ -543,8 +543,8 @@ int caraReconocida(String nombre)
     {
     ultimoReconocimiento=ahora;
 
-    //Activa el rele para abrir la puerta
-    Salidas.pulsoRele(0); //Fuerzo a que el primer rele es el que abre la puerta!!!!!
+    //Activa el rele para abrir la puerta, si hay alguna salida configurada
+    if(salidas.getNumSalidas()>0) salidas.getSalida(0).setPulso(); //Fuerzo a que el primer rele es el que abre la puerta!!!!!
   
     //Informa poir MQTT que se ha habierto la puerta y a quien y cuando
     topic="/camara/caraReconocida";
@@ -572,8 +572,8 @@ int caraReconocida(String nombre)
 /*                                                        */
 /**********************************************************/
 void reconocimientoFacial(boolean debug) 
-  {    
-  if(Entradas.estadoEntrada(0)== LOW && cliente.id==NOT_CONNECTED) {
+  {
+  if(entradas.getEntrada(0).getEstado()== LOW && cliente.id==NOT_CONNECTED) {
     //Serial.println("Si hay que entrar se entra, pero entrar para nada es tonteria.");
     return; //Si no hay movimiento en el PIR ni un cliente en el servidor web, no entro
     }
@@ -678,11 +678,12 @@ void reconocimientoFacial(boolean debug)
             }
           dl_matrix3d_free(face_id_x); //Evito memory leaks
           }
-          //Evito memory leaks
-          free(net_boxes_x->score);
-          free(net_boxes_x->box);
-          free(net_boxes_x->landmark);
-          free(net_boxes_x);
+          //Evito memory leaks     
+          if(debug) Serial.printf("Libreo memoria de net_boxes_x\n");     
+          dl_lib_free(net_boxes_x->score);
+          dl_lib_free(net_boxes_x->box);
+          dl_lib_free(net_boxes_x->landmark);
+          dl_lib_free(net_boxes_x);
         }
       else
         {
@@ -701,7 +702,7 @@ void reconocimientoFacial(boolean debug)
     //Si esta en modo streamming
     if (g_state == START_STREAM && cliente.id!=NOT_CONNECTED) 
       {
-      //Serial.println("Enviando imagen cliente: %i tamaño:%i",cliente.id,fb->len);
+      //Serial.printf("Enviando imagen cliente: %i tamaño:%i",cliente.id,fb->len);
       if(cliente.id!=NOT_CONNECTED) webSocket.sendBIN(cliente.id, (const uint8_t *)fb->buf, fb->len);
       }
 
@@ -832,14 +833,12 @@ void gestionaMensajes(uint8_t cliente, String mensaje) //Tiene que implementar l
   if (mensaje == "reconoce")  
     {
     Serial.println("Activa reconocimiento");
-    //reconocerCaras=true;
     activaRecon(true);
     }
 
   if (mensaje == "no_reconoce")  
     {
-    Serial.println("Activa reconocimiento");
-    //reconocerCaras=false;
+    Serial.println("Desactiva reconocimiento");
     activaRecon(false);
     }
   }

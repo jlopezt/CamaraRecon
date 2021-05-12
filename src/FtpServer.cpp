@@ -30,7 +30,8 @@
 #include <ESP8266WiFi.h>
 #elif defined ESP32
 #include <WiFi.h>
-#include "SPIFFS.h"
+//#include "SPIFFS.h"
+#include "SD_MMC.h"
 #endif
 
 #include <WiFiClient.h>
@@ -438,11 +439,11 @@ boolean FtpServer::processCommand()
       client.println( "501 No file name");
     else if( makePath( path ))
     {
-      if( ! SPIFFS.exists( path ))
+      if( ! SD_MMC.exists( path ))
         client.println( "550 File " + String(parameters) + " not found");
       else
       {
-        if( SPIFFS.remove( path ))
+        if( SD_MMC.remove( path ))
           client.println( "250 Deleted " + String(parameters) );
         else
           client.println( "450 Can't delete " + String(parameters));
@@ -461,8 +462,8 @@ boolean FtpServer::processCommand()
       client.println( "150 Accepted data connection");
       uint16_t nm = 0;
 #ifdef ESP8266
-      Dir dir=SPIFFS.openDir(cwdName);
-     // if( !SPIFFS.exists(cwdName))
+      Dir dir=SD_MMC.openDir(cwdName);
+     // if( !SD_MMC.exists(cwdName))
      //   client.println( "550 Can't open directory " + String(cwdName) );
      // else
       {
@@ -479,7 +480,7 @@ boolean FtpServer::processCommand()
         client.println( "226 " + String(nm) + " matches total");
       }
 #elif defined ESP32
-			File root = SPIFFS.open(cwdName);
+			File root = SD_MMC.open(cwdName);
 			if(!root){
 					client.println( "550 Can't open directory " + String(cwdName) );
 					// return;
@@ -527,9 +528,9 @@ boolean FtpServer::processCommand()
 	  client.println( "150 Accepted data connection");
       uint16_t nm = 0;
 #ifdef ESP8266
-      Dir dir= SPIFFS.openDir(cwdName);
+      Dir dir= SD_MMC.openDir(cwdName);
       char dtStr[ 15 ];
-    //  if(!SPIFFS.exists(cwdName))
+    //  if(!SD_MMC.exists(cwdName))
     //    client.println( "550 Can't open directory " +String(parameters)+ );
     //  else
       {
@@ -546,7 +547,7 @@ boolean FtpServer::processCommand()
         client.println( "226 " + String(nm) + " matches total");
       }
 #elif defined ESP32
-			File root = SPIFFS.open(cwdName);
+			File root = SD_MMC.open(cwdName);
 			// if(!root){
 			// 		client.println( "550 Can't open directory " + String(cwdName) );
 			// 		// return;
@@ -594,8 +595,8 @@ boolean FtpServer::processCommand()
       client.println( "150 Accepted data connection");
       uint16_t nm = 0;
 #ifdef ESP8266
-      Dir dir=SPIFFS.openDir(cwdName);
-     // if( !SPIFFS.exists( cwdName ))
+      Dir dir=SD_MMC.openDir(cwdName);
+     // if( !SD_MMC.exists( cwdName ))
      //   client.println( "550 Can't open directory " + String(parameters));
      // else
       {
@@ -607,7 +608,7 @@ boolean FtpServer::processCommand()
         client.println( "226 " + String(nm) + " matches total");
       }
 #elif defined ESP32
-		File root = SPIFFS.open(cwdName);
+		File root = SD_MMC.open(cwdName);
 		if(!root){
 				client.println( "550 Can't open directory " + String(cwdName) );
 		} else {
@@ -642,7 +643,7 @@ boolean FtpServer::processCommand()
       client.println( "501 No file name");
     else if( makePath( path ))
 	{
-		file = SPIFFS.open(path, "r");
+		file = SD_MMC.open(path, "r");
       if( !file)
         client.println( "550 File " +String(parameters)+ " not found");
       else if( !file )
@@ -672,7 +673,7 @@ boolean FtpServer::processCommand()
       client.println( "501 No file name");
     else if( makePath( path ))
     {
-		file = SPIFFS.open(path, "w");
+		file = SD_MMC.open(path, "w");
       if( !file)
         client.println( "451 Can't open/create " +String(parameters) );
       else if( ! dataConnect())
@@ -717,7 +718,7 @@ boolean FtpServer::processCommand()
       client.println( "501 No file name");
     else if( makePath( buf ))
     {
-      if( ! SPIFFS.exists( buf ))
+      if( ! SD_MMC.exists( buf ))
         client.println( "550 File " +String(parameters)+ " not found");
       else
       {
@@ -742,14 +743,14 @@ boolean FtpServer::processCommand()
       client.println( "501 No file name");
     else if( makePath( path ))
     {
-      if( SPIFFS.exists( path ))
+      if( SD_MMC.exists( path ))
         client.println( "553 " +String(parameters)+ " already exists");
       else
       {          
             #ifdef FTP_DEBUG
 		  Serial.println("Renaming " + String(buf) + " to " + String(path));
             #endif
-            if( SPIFFS.rename( buf, path ))
+            if( SD_MMC.rename( buf, path ))
               client.println( "250 File successfully renamed or moved");
             else
 				client.println( "451 Rename/move failure");
@@ -792,7 +793,7 @@ boolean FtpServer::processCommand()
       client.println( "501 No file name");
     else if( makePath( path ))
 	{
-		file = SPIFFS.open(path, "r");
+		file = SD_MMC.open(path, "r");
       if(!file)
          client.println( "450 Can't open " +String(parameters) );
       else

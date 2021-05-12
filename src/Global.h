@@ -56,7 +56,7 @@
 //Definicion de pines
 #define MAX_PINES        7 //numero de pines disponibles para entradas y salidas
 #define MAX_ENTRADAS     4 //numero maximo de reles soportado
-#define MAX_RELES        MAX_PINES-MAX_ENTRADAS //numero maximo de salidas
+#define MAX_SALIDAS      MAX_PINES-MAX_ENTRADAS //numero maximo de salidas
 
 #define ANCHO_PULSO 1*1000 //Ancho del pulso en milisegundos
 
@@ -77,8 +77,10 @@
 #include <ArduinoJson.h>
 #include <cacharro.h>
 #include <SNTP.h>
+
 #include <Salidas.h>
 #include <Entradas.h>
+
 #include <Secuenciador.h>
 #include <MQTT.h>
 #include <ArduinoOTA.h>
