@@ -263,7 +263,7 @@ boolean SistemaFicherosSDClass::leeFichero(String nombre, String &contenido)
   if (SD_MMC.exists(nombre)) 
     {
     //file exists, reading and loading
-    Serial.printf("Encontrado fichero de configuracion %s.\n",nombre.c_str());
+    Serial.printf("Encontrado fichero %s.\n",nombre.c_str());
     File configFile = SD_MMC.open(nombre, "r");
     if (configFile) 
       {
@@ -273,7 +273,11 @@ boolean SistemaFicherosSDClass::leeFichero(String nombre, String &contenido)
       // Allocate a buffer to store contents of the file.
       char *buff=NULL;
       buff=(char *)malloc(size+1);
-
+      if(buff==NULL){
+        Serial.printf("No se pudo reservar buffer para leer el fichero\n");
+        return false;
+      }
+      
       configFile.readBytes(buff, size);
       buff[size]=0;//pongo el fin de cadena
         

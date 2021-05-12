@@ -5,228 +5,238 @@
 /*****************************************/
 
 /***************************** Defines *****************************/
+#define MAX_PLANES 5
 /***************************** Defines *****************************/
 
 /***************************** Includes *****************************/
+#include <Global.h>
 #include <Secuenciador.h>
+#include <Entradas.h>
+#include <Salidas.h>
+#include <SNTP.h>
+//#include <Ficheros.h>
 /***************************** Includes *****************************/
 
-/************************************** Funciones de configuracion ****************************************/
-void secuenciadorClass::inicializaSecuenciador()
-  {
-  //Valor por defecto de las variables
-  secuenciadorActivo=false;
-  
-  for(int8_t i=0;i<MAX_PLANES;i++)
-    {
-    for(int8_t j=0;j<12;j++) 
-      {
-      planes[i].rele=NO_CONFIGURADO;
-      planes[i].configurado=NO_CONFIGURADO;  
-      planes[i].horas[j]=0;
-      }
-    } 
-        
-  //leo la configuracion del fichero
-  if(!recuperaDatosSecuenciador(debugGlobal)) Serial.println("Configuracion del secuenciador por defecto");
-  else
-    { 
-    //compruebo si la salida asociada a cada plan esta configurada
-    for(int8_t i=0;i<MAX_PLANES;i++)
-      {
-      if(planConfigurado(i)==CONFIGURADO)
-        {  
-        if (Salidas.getReleConfigurado(planes[i].rele)==NO_CONFIGURADO)
-          {
-          Serial.printf("La salida asociada al plan %i no esta configurada\n", planes[i].rele);
-          planes[i].configurado=NO_CONFIGURADO;
-          }
-        //Esta bien configurado  
-        else Salidas.asociarSecuenciador(planes[i].rele, i); //Asocio el rele al plan
-        }
-      else Serial.printf("Plan %i no configurado\n",i);        
-      }
-    }
-  }
+Secuenciador secuenciador;
 
-boolean secuenciadorClass::recuperaDatosSecuenciador(boolean debug)
-  {
+/************************* Constructor ***********************/
+Secuenciador::Secuenciador(void){
+  activado=false;
+  numeroPlanes=0;
+}
+/************************* Fin constructor ***********************/
+
+/************************************** Funciones de configuracion ****************************************/
+void Secuenciador::inicializa(){
+  //leo la configuracion del fichero
+  if(!recuperaDatos(debugGlobal)) Serial.printf("Configuracion del secuenciador por defecto\n");
+  else{ 
+  }
+}
+
+boolean Secuenciador::recuperaDatos(boolean debug){
   String cad="";
 
-  if (debug) Serial.println("Recupero configuracion de archivo...");
+  if (debug) Serial.printf("Recupero configuracion de archivo...\n");
   
-  if(!SistemaFicherosSD.leeFichero(SECUENCIADOR_CONFIG_FILE_SD, cad)) {
-    //if(!SistemaFicheros.leeFichero(SECUENCIADOR_CONFIG_FILE, cad)) {
-      //Confgiguracion por defecto
-      Serial.printf("No existe fichero de configuracion del secuenciador\n");
-      return false;
-    //}      
+  if(!SistemaFicherosSD.leeFichero(SECUENCIADOR_CONFIG_FILE_SD, cad)){
+    //Confgiguracion por defecto
+    Serial.printf("No existe fichero de configuracion del secuenciador\n");
+    cad="{\"estadoInicial\": 0,\"Planes\":[]}";
+    //if(salvaFichero(SECUENCIADOR_CONFIG_FILE, SECUENCIADOR_CONFIG_BAK_FILE, cad)) Serial.printf("Fichero de configuracion del secuenciador creado por defecto\n");
   }
     
-  return parseaConfiguracionSecuenciador(cad);
-  }
+  return parseaConfiguracion(cad);
+}
 
 /*********************************************/
 /* Parsea el json leido del fichero de       */
 /* configuracio de los reles                 */
 /*********************************************/
-boolean secuenciadorClass::parseaConfiguracionSecuenciador(String contenido)
-  {  
+boolean Secuenciador::parseaConfiguracion(String contenido){  
   DynamicJsonBuffer jsonBuffer;
   JsonObject& json = jsonBuffer.parseObject(contenido.c_str());
   
-  json.printTo(Serial);
+  String cad;
+  json.printTo(cad);//pinto el json que he leido
+  Serial.printf("json creado:\n#%s#\n",cad.c_str());
+  
   if (!json.success()) return false;
         
-  Serial.println("parsed json");
+  Serial.printf("\nparsed json\n");
 //******************************Parte especifica del json a leer********************************  
-  secuenciadorActivo=json["estadoInicial"];
+  if(json.containsKey("estadoInicial")) activado=json.get<int>("estadoInicial");
   
   JsonArray& Planes = json["Planes"];  
 
-  int8_t max;
-  max=(Planes.size()<MAX_PLANES?Planes.size():MAX_PLANES);
-  for(int8_t i=0;i<max;i++)
-    { 
-    //Plan configurado
-    planes[i].configurado=CONFIGURADO;
-      
-    //Salida asociada
-    planes[i].rele=Planes[i]["salida"];
+  numeroPlanes=(Planes.size()<MAX_PLANES?Planes.size():MAX_PLANES);
+  Serial.printf("Se configuraran %i planes\n", numeroPlanes);
 
-    //Intevalos
-    JsonArray& Intervalos = json["Planes"][i]["intervalos"];  
-    for(int8_t j=0;j<HORAS_EN_DIA;j++) planes[i].horas[j]=Intervalos[j]["valor"];//el valor es un campo de bit. los primeros 12 son los intervalos de 5 min de cada hora
-  
-    Serial.printf("Plan %i:\nSalida: %i\n", i, planes[i].rele); 
-    for(int8_t j=0;j<HORAS_EN_DIA;j++) Serial.printf("hora %02i: valor: %01i\n",j,planes[i].horas[j]);    
+  secuenciador.planes = new Plan[numeroPlanes];
+
+  for(int8_t i=0;i<numeroPlanes;i++){ 
+    int8_t _id;
+    String _nombre="";
+    int8_t _salidaAsociada=-1;        //salida a la que se asocia la secuencia
+    uint32_t _intervalos[INTERVALOS_EN_HORA];      //el valor es un campo de bit. los primeros INTERVALOS_EN_HORA son los intervalos de cada hora
+    for(uint8_t i=0;i<HORAS_EN_DIA;i++) _intervalos[i]=0;
+
+    JsonObject& _plan = Planes[i];//json["Planes"][i];
+    //leo los valores del json
+    _id=i;
+    if(_plan.containsKey("nombre")) _nombre=_plan.get<String>("nombre");
+    if(_plan.containsKey("salida")) _salidaAsociada=_plan.get<int>("salida");
+
+    if(_salidaAsociada>=salidas.getNumSalidas()) {
+      Serial.printf("Plan %i, La salida asociada (%i) no esta configurada\n",_id,_salidaAsociada);
+      numeroPlanes=0;//Esto aborta la configuracion de los planes!!!!!!!
     }
+    else{
+      //Intevalos
+      for(int8_t j=0;j<INTERVALOS_EN_HORA;j++) {
+        JsonObject& intervalo = _plan["intervalos"][j];//json["Planes"][i]["horas"][j];  
+        if(intervalo.containsKey("valor")) _intervalos[j]=intervalo.get<int>("valor");        
+      }
+    
+      //Serial.printf("Plan %i: id: %i, nombre: %s, salida: %i\n", i, _id, _nombre.c_str(), _salidaAsociada);
+      //for(int8_t j=0;j<INTERVALOS_EN_HORA;j++) Serial.printf("intervalo[%i]: %i\n", j, _intervalos[j]);
+      planes[i].configura(_id, _nombre, _salidaAsociada, _intervalos);
+
+      Serial.printf("Plan %s (%i):\n\tSalida: %i\n", planes[i].getNombre().c_str(), i, planes[i].getSalida()); 
+      for(int8_t j=0;j<INTERVALOS_EN_HORA;j++) Serial.printf("\tintervalo %02i: valor: %01i\n",j,planes[i].getIntervalo(j));    
+    }
+  }
 //************************************************************************************************
   return true; 
-  }
+}
 /**********************************************************Fin configuracion******************************************************************/  
 
 /**********************************************************SALIDAS******************************************************************/    
-/*************************************************/
-/*Logica del secuenciador                        */
-/*Comporueba como debe estar en ese peridodo de  */
-/*cinco minutos parea esa hora y actualiza el    */
-/*rele correspondiente                           */
-/*************************************************/
-void secuenciadorClass::actualizaSecuenciador(bool debug)
-  {
-  if(!estadoSecuenciador()) return;
+/******************************************************************/
+/*Logica del secuenciador: pregunta por cada plan, como debe      */
+/*estar en ese peridodo de y actualiza la salida correspondiente  */
+/******************************************************************/
+void Secuenciador::actualiza(bool debug){
+  if(!activado) return;
     
-  for(int8_t i=0;i<getNumPlanes();i++)
-    {
-    if(planConfigurado(i))
-      {
-      int mascara=1;
-      int8_t limite=reloj.minuto()/(int)5;
-      mascara<<=limite;//calculo la mascara para leer el bit correspondiente al minuto adecuado
-
-      if(debug) Serial.printf("Hora: %02i:%02i\nMascara: %i | intervalo: %i\n",reloj.hora(),reloj.minuto(),mascara,planes[i].horas[reloj.hora()]);
-      
-      if(planes[i].horas[reloj.hora()] & mascara) Salidas.conmutaRele(planes[i].rele, cacharro.getNivelActivo(), debugGlobal);
-      else Salidas.conmutaRele(planes[i].rele, !cacharro.getNivelActivo(), debugGlobal);
-      }  
-    }
+  for(int8_t i=0;i<getNumPlanes();i++){
+    /*
+    Serial.printf("Inicio plan %i------------------------------------------------\n",i);
+    if(planes[i].getEstado()!=0) Serial.printf("Es 1\n");
+    else Serial.printf("Es 0\n");
+    Serial.printf("Fin----------------------------------------------------------\n");
+    */
+    if(planes[i].getEstado()!=salidas.getSalida(planes[i].getSalida()).getEstado()) salidas.conmuta(planes[i].getSalida(),planes[i].getEstado());
   }
+}
 
 /**************************************************/
-/*                                                */
 /* Devuelve el nuemro de planes definido          */
-/*                                                */
 /**************************************************/
-int8_t secuenciadorClass::getNumPlanes()
-  {
-  int resultado=0;
-  
-  for(int8_t i=0;i<MAX_PLANES;i++)
-    {
-    if(planes[i].configurado==CONFIGURADO) resultado++;
-    }
-  return resultado; 
-  }  
+int8_t Secuenciador::getNumPlanes(){return numeroPlanes;}  
+
+/***************************************************/
+/* Devuelve el numero de salida asociada a un plan */
+/***************************************************/
+int8_t Secuenciador::getSalida(uint8_t plan){return planes[plan].getSalida();}
+
+/*********************************************************/
+/* Devuelve el estado configurado para el plan indicado, */
+/* en una hora y minuto concreto                         */
+/* valor devuelto: ESTADO_DESACTIVO o ESTADO_ACTIVO      */
+/*********************************************************/
+int Secuenciador::getEstadoPlan(uint8_t plan, uint8_t hora, uint8_t minuto){return planes[plan].getEstado(hora, minuto);}
+int Secuenciador::getEstadoPlan(uint8_t plan){return planes[plan].getEstado();}
 
 /********************************************************/
-/*                                                      */
-/*     Devuelve si el plan esta configurados            */
-/*                                                      */
-/********************************************************/ 
-int secuenciadorClass::planConfigurado(uint8_t id)
-  {
-  if(id<0 || id>MAX_PLANES) return NO_CONFIGURADO;
-    
-  return planes[id].configurado;
-  }
-
-/********************************************************/
-/*                                                      */
 /*             Activa el secuenciador                   */
-/*                                                      */
 /********************************************************/ 
-void secuenciadorClass::activarSecuenciador(void)
-  {
-  secuenciadorActivo=true;
-  }
+void Secuenciador::activar(void){activado=true;}
 
 /********************************************************/
-/*                                                      */
 /*             Desactiva el secuenciador                */
-/*                                                      */
 /********************************************************/ 
-void secuenciadorClass::desactivarSecuenciador(void)
-  {
-  secuenciadorActivo=false;
-  }
+void Secuenciador::desactivar(void){activado=false;}
   
-/********************************************************/
-/*                                                      */
-/*     Devuelve el estado del secuenciador              */
-/*                                                      */
-/********************************************************/ 
-boolean secuenciadorClass::estadoSecuenciador(void)
-  {
-  return secuenciadorActivo;
-  }  
+/*********************************************************/
+/*          Devuelve el estado del secuenciador          */
+/*********************************************************/
+boolean Secuenciador::getEstado(void){return activado;}  
 
-/********************************************************/
-/*                                                      */
-/*     Genera codigo HTML para representar el plan      */
-/*                                                      */
-/********************************************************/ 
-String secuenciadorClass::pintaPlanHTML(int8_t plan)
-  {
+/***********************************************************/
+/*   Devuelve el estado de las entradas en formato json    */
+/***********************************************************/
+String Secuenciador::generaJsonEstado(void){
   String cad="";
 
-  //validaciones previas
-  if(plan<0 || plan>MAX_PLANES) return cad;
-
-  cad += "<TABLE style=\"border: 2px solid black\">\n";
-  cad += "<CAPTION>Plan " + String(plan) + "</CAPTION>\n";  
-
-  //Cabecera
-  cad += "<tr>";
-  cad += "<th>Hora</th>";
-  for(int8_t i=0;i<HORAS_EN_DIA;i++) cad += "<th style=\"width:40px\">" + String(i) + "</th>";
-  cad += "</tr>";
-
-  //Cada fila es un intervalo, cada columna un hora
-  int mascara=1;  
+  const size_t bufferSize = JSON_ARRAY_SIZE(5) + JSON_OBJECT_SIZE(2) + 5*JSON_OBJECT_SIZE(4);
+  DynamicJsonBuffer jsonBuffer(bufferSize);
   
-  for(int8_t intervalo=0;intervalo<12;intervalo++)
-    {
-    Serial.printf("intervalo: %i | cad: %i\n",intervalo,cad.length());      
-    cad += "<tr>";
-    cad += "<td>" + String(intervalo) + ": (" + String(intervalo*5) + "-" + String(intervalo*5+4) + ")</td>";    
-    for(int8_t i=0;i<HORAS_EN_DIA;i++) cad += "<td style=\"text-align:center;\">" + (planes[plan].horas[i] & mascara?String(1):String(0)) + "</td>";
-    cad += "</tr>";
-    
-    mascara<<=1;
-    }  
-    
-  return cad;  
+  JsonObject& root = jsonBuffer.createObject();
+  
+  if(activado) root["estado"] = 1;
+  else root["estado"]=0;
+
+  JsonArray& _planes = root.createNestedArray("planes");
+  for(int8_t id=0;id<numeroPlanes;id++){
+    JsonObject& _plan = _planes.createNestedObject(); 
+    _plan["id"] = id;
+    _plan["nombre"] = planes[id].getNombre();
+    _plan["salida"] = planes[id].getSalida();
+    _plan["estado"] = planes[id].getEstado();
   }
 
-secuenciadorClass Secuenciador;
+  root.printTo(cad);
+  return cad;  
+}
+/************************* Secuenciador ********************************/
+
+
+/************************************** Plan *********************************/
+/************************* Constructor ***********************/
+Plan::Plan(void){
+  id=-1;
+  salidaAsociada=NO_CONFIGURADO;
+  nombre="";
+  for(int8_t j=0;j<INTERVALOS_EN_HORA;j++) intervalos[j]=0;
+}
+/************************* Fin constructor ***********************/
+
+/**************************************************/
+/* Configura el plan con lo valores recibidos     */
+/**************************************************/
+void Plan::configura(int8_t _id, String _nombre, int8_t _salidaAsociada, uint32_t _intervalos[INTERVALOS_EN_HORA]){
+  id=_id,
+  nombre=_nombre;
+  salidaAsociada=_salidaAsociada;
+  
+  for(uint8_t j=0;j<INTERVALOS_EN_HORA;j++) intervalos[j]=_intervalos[j];
+
+  //configuro la salida asociada en modo secuenciador y la asocio al plan
+  salidas.asociarSecuenciador(salidaAsociada,id);
+}
+
+/**************************************************/
+/* Devuelve el numero de salida asociada a un plan*/
+/**************************************************/
+int8_t Plan::getSalida(void){return salidaAsociada;}  
+
+/*****************************************************/
+/* Devuelve el valor de horas de ese plan a esa hora */
+/*****************************************************/
+uint32_t Plan::getIntervalo(int8_t intervalo){return intervalos[intervalo];}
+
+/*********************************************************/
+/* Devuelve el estado configurado para una hora y minuto */
+/* valor devuelto: ESTADO_DESACTIVO o ESTADO_ACTIVO      */
+/*********************************************************/
+int Plan::getEstado(uint8_t hora, uint8_t intervalo){ 
+  uint32_t _mascara=1;
+  _mascara<<=hora;
+
+  Serial.printf("Plan %i | Hora: %i | intervalo: %i | mascara: %i | valor: %i | retorno: %i\n",id,hora,intervalo,_mascara,intervalos[intervalo],(intervalos[intervalo] & _mascara?1:0));
+  
+  if(intervalos[intervalo] & _mascara) return ESTADO_ACTIVO;
+  else return ESTADO_DESACTIVO;
+}
+int Plan::getEstado(void){return getEstado(reloj.hora(),reloj.minuto());}

@@ -1,6 +1,6 @@
 /*****************************************/
 /*                                       */
-/*     Control de salidas a rele         */
+/*  Control de salidas                   */
 /*                                       */
 /*****************************************/
 
@@ -9,361 +9,248 @@
 
 /***************************** Includes *****************************/
 #include <Salidas.h>
+#include <salida.h>
+
+//#include <MQTT.h>
+//#include <Ficheros.h>
 /***************************** Includes *****************************/
 
-/************************************** Funciones de salida ****************************************/
-void salida::inicializaSalida(void)
-  {
-  configurado=NO_CONFIGURADO ;//la inicializo a no configurada
-  nombre="No configurado";
-  estado=0;    
-  pin=NO_CONFIGURADO;
-  pinLed=NO_CONFIGURADO;   
-  secuenciador=NO_CONFIGURADO;
-  finPulso=0;
-  inicio=0;  
-  }
+/***************************** Variables locales *****************************/
+Salidas salidas;
+/***************************** Fin variables locales *****************************/
 
-void salida::inicializaSalida(int8_t config, String nom, int8_t est, int8_t p, int8_t pLed, int8_t sec, unsigned long finP,int8_t ini)
-  {
-  configurado=config;//la inicializo a configurada
-  nombre=nom;
-  estado=est;    
-  pin=p;
-  pinLed=pLed;      
-  secuenciador=sec;
-  finPulso=finP;
-  inicio=ini;
-  }  
-/************************************** Funciones de salida ****************************************/
+/************************************** Constructor ****************************************/
+Salidas::Salidas(void){
+  numeroSalidas=0;
+  salidaActiva=-1;
+}
+/************************************** Fin constructor ****************************************/
 
 /************************************** Funciones de configuracion ****************************************/
 /*********************************************/
 /* Inicializa los valores de los registros de*/
 /* las salidas y recupera la configuracion   */
 /*********************************************/
-void SalidasClass::inicializaSalidas()
-  {  
-  //inicializo la parte logica
-  for(int8_t i=0;i<MAX_RELES;i++) {reles[i].inicializaSalida();}
-         
+void Salidas::inicializa(void){  
   //leo la configuracion del fichero
-  if(!recuperaDatosSalidas(debugGlobal)) Serial.println("Configuracion de los reles por defecto");
-  else
-    {  
-    for(int8_t i=0;i<MAX_RELES;i++)
-      {      
-      pinMode(reles[i].getPin(), OUTPUT); //es salida
-      pinMode(reles[i].getPinLed(), OUTPUT); //es salida
+  if(!recuperaDatos(debugGlobal)) Serial.printf("Configuracion de los reles por defecto\n");
+  else{  
+    //Salidas
+    for(int8_t i=0;i<salidas.getNumSalidas();i++){    
+      //parte logica        
+      salida[i].conmuta(salida[i].getEstadoInicial());//salida[i].estado=salida[i].inicio;  
       
-      //parte logica
-      reles[i].setEstado(reles[i].getInicio());
       //parte fisica
-      if(reles[i].getInicio()==1)
-        {
-        digitalWrite(reles[i].getPin(), cacharro.getNivelActivo());  //lo inicializo a apagado
-        digitalWrite(reles[i].getPinLed(), HIGH);  //lo inicializo encendido
-        }
-      else
-        {
-        digitalWrite(reles[i].getPin(), !cacharro.getNivelActivo());  //lo inicializo a apagado 
-        digitalWrite(reles[i].getPinLed(), LOW);  //lo inicializo a apagado
-        }
+      switch (salida[i].getTipo()){
+        case TIPO_DIGITAL:
+          pinMode(salida[i].getPin(), OUTPUT); //es salida
+          break;  
+        case TIPO_LED:
+          ledcSetup(salida[i].getCanal(),salida[i].getFrecuencia(),salida[i].getResolucion());
+          ledcAttachPin(salida[i].getPin(),salida[i].getCanal());
+          break;
       }
 
-    //Salidas configuradas
-    for(int i=0;i<MAX_RELES;i++) if(reles[i].getConfigurado()==CONFIGURADO) Serial.printf("Nombre rele[%i]=%s | pin rele: %i | pin Led: %i | inicio: %i\n",i,reles[i].getNombre().c_str(),reles[i].getPin(),reles[i].getPinLed(),reles[i].getInicio());
-    }    
+      //Lo inicializo segun lo configurado               
+      if(salida[i].getEstadoInicial()==ESTADO_ACTIVO){
+        switch (salida[i].getTipo()){
+          case TIPO_DIGITAL:
+            digitalWrite(salida[i].getPin(), cacharro.getNivelActivo());  
+            break;
+          case TIPO_LED:
+            if(cacharro.getNivelActivo()==1) ledcWrite(salida[i].getCanal(),salida[i].getValorPWM());
+            else ledcWrite(salida[i].getCanal(),(1<<RESOLUCION_PWM)-salida[i].getValorPWM());
+            break;
+        }
+      }
+      else{
+        switch (salida[i].getTipo()){
+          case TIPO_DIGITAL:
+            digitalWrite(salida[i].getPin(), !cacharro.getNivelActivo()); 
+            break;
+          case TIPO_LED:
+            if(cacharro.getNivelActivo()==1) ledcWrite(salida[i].getCanal(),0);
+            else ledcWrite(salida[i].getCanal(),(1<<RESOLUCION_PWM));            
+            break;
+        }
+      }
+      
+      Serial.printf("Nombre salida[%i]=%s | pin salida: %i | tipo: %i | estado= %i | estado inicial: %i | modo: %i\n",i,salida[i].getNombre().c_str(),salida[i].getPin(),salida[i].getTipo(),salida[i].getEstado(),salida[i].getEstadoInicial(), salida[i].getModo());
+      Serial.printf("\tEstados y  mensajes:\n");
+      for(uint8_t j=0;j<2;j++) Serial.printf("\t\tEstado %i: %s | mensaje: %s\n",j,salida[i].getNombreEstado(j).c_str(),salida[i].getMensajeEstado(j).c_str());
+    }
   }
+}
 
 /*********************************************/
 /* Lee el fichero de configuracion de las    */
-/* entradas o genera conf por defecto        */
+/* salidas o genera conf por defecto         */
 /*********************************************/
-boolean SalidasClass::recuperaDatosSalidas(boolean debug)
-  {
+boolean Salidas::recuperaDatos(int debug){
   String cad="";
 
-  if (debug) Serial.println("Recupero configuracion de archivo...");
+  if (debug) Serial.printf("Recupero configuracion de archivo...\n");
   
-  if(!SistemaFicherosSD.leeFichero(SALIDAS_CONFIG_FILE_SD, cad)) {
-    //if(!SistemaFicheros.leeFichero(SALIDAS_CONFIG_FILE, cad)) {
-      //Confgiguracion por defecto
-      Serial.printf("No existe fichero de configuracion de Salidas\n");    
-      return false;
-    //}      
+  if(!SistemaFicherosSD.leeFichero(SALIDAS_CONFIG_FILE_SD, cad)){
+    //Confgiguracion por defecto
+    Serial.printf("No existe fichero de configuracion de Salidas\n");    
+    cad="{\"Salidas\": []}";
+    //salvo la config por defecto
+    //if(salvaFichero(SALIDAS_CONFIG_FILE, SALIDAS_CONFIG_BAK_FILE, cad)) Serial.printf("Fichero de configuracion de Salidas creado por defecto\n");
   }
-      
-  return parseaConfiguracionSalidas(cad);
-  }
+    
+  return parseaConfiguracion(cad);
+}
 
 /*********************************************/
 /* Parsea el json leido del fichero de       */
-/* configuracio de los reles                 */
+/* configuracio de las salidas               */
 /*********************************************/
-boolean SalidasClass::parseaConfiguracionSalidas(String contenido)
-  { 
+boolean Salidas::parseaConfiguracion(String contenido){ 
   DynamicJsonBuffer jsonBuffer;
   JsonObject& json = jsonBuffer.parseObject(contenido.c_str());
   
-  json.printTo(Serial);
+  String cad;
+  json.printTo(cad);//pinto el json que he creado
+  Serial.printf("json creado:\n#%s#\n",cad.c_str());
+  
   if (!json.success()) return false;
         
-  Serial.println("parsed json");
+  Serial.printf("\nparsed json\n");
 //******************************Parte especifica del json a leer********************************
   JsonArray& Salidas = json["Salidas"];
+  
+  //variables teporales para almacenar los valores leidos del json
+  String nombre="";
+  int8_t tipo=-1;
+  int8_t pin=-1;
+  int8_t inicio=-1;
+  int8_t modo=-1;
 
-  int8_t max;
-  max=(Salidas.size()<MAX_RELES?Salidas.size():MAX_RELES);
-  for(int8_t i=0;i<max;i++)
-    { 
-    //Si de inicio debe estar activado o desactivado
-    int8_t est;
-    if(String((const char *)Salidas[i]["inicio"])=="on") est=1;
-    else est=0;
+  int16_t anchoPulso=-1;
+  int8_t controlador=-1;
 
-    reles[i].inicializaSalida(CONFIGURADO, String((const char *)Salidas[i]["nombre"]), est, atoi(Salidas[i]["GPIO"]),atoi(Salidas[i]["GPIOLED"]), NO_CONFIGURADO, 0, 0);    
+  int16_t valorPWM=-1;
+  int8_t canal=-1;
+  int16_t frecuencia=-1;
+  int8_t resolucion=-1;
+
+  String nombres[2]={"",""};
+  String mensajes[2]={"",""};
+  
+  numeroSalidas=(Salidas.size()<MAX_SALIDAS?Salidas.size():MAX_SALIDAS);
+  Serial.printf("Se configurarán %i salidas\n",numeroSalidas);
+
+  salidas.salida=new Salida[numeroSalidas];
+
+  for(int8_t i=0;i<numeroSalidas;i++){ 
+    JsonObject& _salida = json["Salidas"][i];
+
+    if(_salida.containsKey("nombre")) nombre=_salida.get<String>("nombre");
+    if(_salida.containsKey("tipo")) tipo=_salida.get<int>("tipo");
+    if(_salida.containsKey("GPIO")) pin=_salida.get<int>("GPIO"); else return false;
+    if(_salida.containsKey("inicio")){
+      if(_salida.get<String>("inicio")=="on") inicio=1; //Si de inicio debe estar activado o desactivado
+      else inicio=0;
     }
-    
-  Serial.printf("Salidas:\n"); 
-  for(int8_t i=0;i<MAX_RELES;i++) Serial.printf("%02i: %s| pin: %i| pinLed: %i| configurado= %i\n",i,reles[i].getNombre().c_str(),reles[i].getPin(),reles[i].getPinLed(),reles[i].getConfigurado()); 
+    if(_salida.containsKey("modo")) modo=_salida.get<int>("modo");
+    if(_salida.containsKey("anchoPulso")) anchoPulso=_salida.get<int>("anchoPulso");
+    if(_salida.containsKey("controlador")) controlador=_salida.get<int>("controlador");
+    if(_salida.containsKey("valorPWM")) valorPWM=_salida.get<int>("valorPWM");
+    if(_salida.containsKey("canal")) canal=_salida.get<int>("canal");
+    if(_salida.containsKey("frecuencia")) frecuencia=_salida.get<int>("frecuencia");
+    if(_salida.containsKey("resolucion")) resolucion=_salida.get<int>("resolucion");   
+   
+    if(_salida.containsKey("Estados")){
+      int8_t est_max=_salida["Estados"].size();//maximo de mensajes en el JSON
+      if (est_max>2) est_max=2;               //Si hay mas de 2; solo leo 2
+      for(int8_t e=0;e<est_max;e++){
+        if (_salida["Estados"][e]["valor"]==e) nombres[e]=String((const char *)_salida["Estados"][e]["texto"]);
+      }
+    }
+    if(_salida.containsKey("Mensajes")){
+      int8_t men_max=_salida["Mensajes"].size();//maximo de mensajes en el JSON
+      if (men_max>2) men_max=2;                //Si hay mas de 2, solo leo 2
+      for(int8_t m=0;m<men_max;m++){
+        if (_salida["Mensajes"][m]["valor"]==m) mensajes[m]=String((const char *)_salida["Mensajes"][m]["texto"]);
+      }
+    }
+    Serial.printf("Salida %i: nombre: %s, tipo: %i; pin: %i, inicio: %i, valorPWM: %i, anchoPulso: %i; modo: %i, canal: %i, frecuencia: %i, resolucion: %i, controlador: %i, nombre[0]: %s, nombre[1]: %s, mensaje[0]: %s, mensaje[1]: %s\n",i,nombre.c_str(), tipo, pin, inicio, valorPWM, anchoPulso, modo, canal, frecuencia, resolucion, controlador, nombres[0].c_str(), nombres[1].c_str(), mensajes[0].c_str(), mensajes[1].c_str());
+    configura(i,nombre, tipo, pin, inicio, valorPWM, anchoPulso, modo, canal, frecuencia, resolucion, controlador, nombres, mensajes);
+  }
+
+  if(debugGlobal || true) {
+    Serial.printf("*************************\nSalidas:\n"); 
+    for(int8_t i=0;i<numeroSalidas;i++){
+      Serial.printf("%01i: %s |  pin: %i | tipo: %i | modo: %i | controlador: %i | ancho del pulso: %i\n",i,salida[i].getNombre().c_str(),salida[i].getPin(),salida[i].getTipo(), salida[i].getModo(),salida[i].getControlador(), salida[i].getAnchoPulso()); 
+      Serial.printf("Estados:\n");
+      for(int8_t e=0;e<2;e++){Serial.printf("Estado[%02i]: %s\n",e,salida[i].getNombreEstado(e).c_str());}
+      Serial.printf("Mensajes:\n");
+      for(int8_t m=0;m<2;m++) {Serial.printf("Mensaje[%02i]: %s\n",m,salida[i].getMensajeEstado(m).c_str());}    
+    }
+    Serial.printf("*************************\n");  
+  }
 //************************************************************************************************
   return true; 
-  }
+}
+
+void Salidas::configura(uint8_t id, String _nombre, int8_t _tipo, int8_t _pin, int8_t _inicio, int16_t _valorPWM, int16_t _anchoPulso, int8_t _modo, int8_t _canal, int16_t _frecuencia, int8_t _resolucion, int8_t _controlador, String _nombres[2], String _mensajes[2]){
+  salida[id].configura(_nombre, _tipo, _pin, _inicio, _valorPWM, _anchoPulso, _modo, _canal, _frecuencia, _resolucion, _controlador, _nombres, _mensajes);
+}
+
 /**********************************************************Fin configuracion******************************************************************/  
 
 /**********************************************************SALIDAS******************************************************************/    
 /*************************************************/
-/*Logica de los reles:                           */
+/*Logica de las salidas:                         */
 /*Si esta activo para ese intervalo de tiempo(1) */
 /*Si esta por debajo de la tMin cierro rele      */
 /*si no abro rele                                */
 /*************************************************/
-void SalidasClass::actualizaSalidas(bool debug)
-  {
-  for(int8_t id=0;id<MAX_RELES;id++)
-    {
-    if (reles[id].getConfigurado()==CONFIGURADO && reles[id].getEstado()==2) //esta configurado y pulsando
-      {
-      if(reles[id].getFinPulso()>ANCHO_PULSO)//el contador de millis no desborda durante el pulso
-        {
-        if(millis()>=reles[id].getFinPulso()) //El pulso ya ha acabado
-          {
-          conmutaRele(id,!cacharro.getNivelActivo(),debugGlobal);  
-          if(debug) Serial.printf("Fin del pulso. millis()= %lu\n",millis());
-          }//del if del fin de pulso
-        }//del if de desboda
-      else //El contador de millis desbordar durante el pulso
-        {
-        if(UINT64_MAX-ANCHO_PULSO>millis())//Ya ha desbordado
-          {
-          if(millis()>=reles[id].getFinPulso()) 
-            {
-            conmutaRele(id,!cacharro.getNivelActivo(),debugGlobal);
-            if(debug) Serial.printf("Fin del pulso. millis()= %lu\n",millis());
-            }//del if del fin de pulso
-          }//del if ha desbordado ya
-        }//else del if de no desborda
-      }//del if configurado
-    }//del for    
-  }//de la funcion
+void Salidas::actualiza(bool debug){
+  for(int8_t id=0;id<numeroSalidas;id++) salida[id].actualiza();
+}
 
-/*************************************************/
-/*                                               */
-/*  Devuelve el estado  del rele indicado en id  */
-/*  puede ser 0 apagado, 1 encendido, 2 pulsando */
-/*                                               */
-/*************************************************/
-int8_t SalidasClass::getEstadoRele(int8_t id)
-  {
-  if(id <0 || id>=MAX_RELES) return NO_CONFIGURADO; //Rele fuera de rango
-  if(reles[id].getConfigurado()!=CONFIGURADO) return -1; //No configurado
-  
-  return reles[id].getEstado();
- }
+int8_t Salidas::conmuta(uint8_t id, int8_t estado_final){
+  return salida[id].conmuta(estado_final);
+}
 
-/********************************************************/
-/*                                                      */
-/*  Devuelve el nombre del rele con el id especificado  */
-/*                                                      */
-/********************************************************/
-String SalidasClass::getNombreRele(int8_t id)
-  { 
-  if(id <0 || id>=MAX_RELES) return "ERROR"; //Rele fuera de rango    
-  return reles[id].getNombre();
-  } 
+int8_t Salidas::setValorPWM(uint8_t id, int16_t valor){
+  return salida[id].setValorPWM(valor);
+}
 
-/*************************************************/
-/*conmuta el rele indicado en id                 */
-/*devuelve 1 si ok, -1 si ko                     */
-/*************************************************/
-boolean SalidasClass::conmutaRele(int8_t id, boolean estado_final, int debug)
-  {
-  //validaciones previas
-  if(id <0 || id>=MAX_RELES) return false; //Rele fuera de rango
-  if(reles[id].getConfigurado()==NO_CONFIGURADO) return false; //El rele no esta configurado
-  
-  //parte logica
-  if(estado_final==cacharro.getNivelActivo()) reles[id].setEstado(1);
-  else reles[id].setEstado(0);
-  
-  //parte fisica
-  digitalWrite(reles[id].getPin(), estado_final); //controlo el rele
-  //controlo el led asociado
-  if(reles[id].getPinLed()!=NO_CONFIGURADO)
-    {
-    if (cacharro.getNivelActivo()) digitalWrite(reles[id].getPinLed(), estado_final); 
-    else digitalWrite(reles[id].getPinLed(), !estado_final); 
-    }
+int8_t Salidas::setPulso(uint8_t id){
+  return salida[id].setPulso();
+}
+int8_t Salidas::setSalida(uint8_t id, int8_t estado){
+  return salida[id].setSalida(estado);
+}
+int8_t Salidas::salidaMaquinaEstados(uint8_t id, int8_t estado){
+  return salida[id].salidaMaquinaEstados(estado);
+}
+void Salidas::setModoManual(uint8_t id){
+  return salida[id].setModoManual();
+}
+void Salidas::setModoInicial(uint8_t id){
+  return salida[id].setModoInicial();
+}
 
-  if(debug)
-    {
-    Serial.printf("id: %i; GPIO: %i; estado: ",(int)id,(int)reles[id].getPin());
-    Serial.println(digitalRead(reles[id].getPin()));
-    }
-    
-  return true;
-  }
-
-/****************************************************/
-/*   Genera un pulso en rele indicado en id         */
-/*   devuelve 1 si ok, -1 si ko                     */
-/****************************************************/
-boolean SalidasClass::pulsoRele(int8_t id)
-  {
-  //validaciones previas
-  if(id <0 || id>=MAX_RELES) return NO_CONFIGURADO;
-      
-  //Pongo el rele en nivel Activo  
-  if(!conmutaRele(id, cacharro.getNivelActivo(), debugGlobal)) return false; //Si no puede retorna -1
-
-  //cargo el campo con el valor definido para el ancho del pulso
-  reles[id].setEstado(2);//estado EN_PULSO
-  reles[id].setFinPulso(millis()+ANCHO_PULSO); 
-
-  Serial.printf("Incio de pulso %lu| fin calculado %lu\n",millis(),reles[id].getFinPulso());
-  
-  return true;  
-  }
-
-/********************************************************/
-/*                                                      */
-/*     Recubre las dos funciones anteriores para        */
-/*     actuar sobre un rele                             */
-/*                                                      */
-/********************************************************/ 
-boolean SalidasClass::actuaRele(int8_t id, int8_t estado)
-  {
-  switch(estado)
-    {
-    case 0:
-      return conmutaRele(id, !cacharro.getNivelActivo(), debugGlobal);
-      break;
-    case 1:
-      return conmutaRele(id, cacharro.getNivelActivo(), debugGlobal);
-      break;
-    case 2:
-      return pulsoRele(id);
-      break;      
-    default://no deberia pasar nunca!!
-      return -1;
-    }
-  }
-
-/********************************************************/
-/*                                                      */
-/*     Devuelve si el reles esta configurados           */
-/*                                                      */
-/********************************************************/ 
-int8_t SalidasClass::getReleConfigurado(uint8_t id)
-  {
-  if(id <0 || id>=MAX_RELES) return NO_CONFIGURADO;
-    
-  return reles[id].getConfigurado();
-  } 
-  
-
-/********************************************************/
-/*                                                      */
-/*     Devuelve el pin asoiciado al rele                */
-/*                                                      */
-/********************************************************/ 
-int8_t SalidasClass::getPinReleLed(int8_t id)
-  {
-  if(id <0 || id>=MAX_RELES) return NO_CONFIGURADO;
-    
-  return reles[id].getPinLed();
-  }   
-
-/********************************************************/
-/*                                                      */
-/*     Devuelve el pin asoiciado al rele                */
-/*                                                      */
-/********************************************************/ 
-int8_t SalidasClass::getPinRele(int8_t id)
-  {
-  if(id <0 || id>=MAX_RELES) return NO_CONFIGURADO;
-    
-  return reles[id].getPin();
-  }   
-
-/********************************************************/
-/*                                                      */
-/*  Devuelve el modo inicial del pin asociado al rele   */
-/*                                                      */
-/********************************************************/ 
-int8_t SalidasClass::getInicioRele(int8_t id)
-  {
-  if(id <0 || id>=MAX_RELES) return NO_CONFIGURADO;
-    
-  return reles[id].getInicio();
-  }   
+/**********************************************************/
+/*    modifica el modo y el controlador de la salida      */
+/**********************************************************/
+void Salidas::asociarSecuenciador(uint8_t salidaAsociada, uint8_t plan){  
+  salida[salidaAsociada].asociarSecuenciador(plan);
+}
 
 /********************************************************/
 /*                                                      */
 /*     Devuelve el numero de reles configurados         */
 /*                                                      */
 /********************************************************/ 
-int SalidasClass::relesConfigurados(void)
-  {
-  int resultado=0;
-  
-  for(int8_t i=0;i<MAX_RELES;i++)
-    {
-    if(reles[i].getConfigurado()==CONFIGURADO) resultado++;
-    }
-  return resultado;
-  } 
+int Salidas::salidasConfiguradas(void){return numeroSalidas;}
 
-/********************************************************/
-/*                                                      */
-/*     Asocia la salida a un plan de secuenciador       */
-/*                                                      */
-/********************************************************/ 
-boolean SalidasClass::asociarSecuenciador(int8_t id, int8_t plan)
-  {
-  //validaciones previas
-  if(id <0 || id>=MAX_RELES) return false;
-
-  reles[id].setSecuenciador(plan); 
-  return true;
-  }  
-
-/********************************************************/
-/*                                                      */
-/*     Devuelve si la salida esta asociada              */
-/*     a un plan de secuenciador                        */
-/*                                                      */
-/********************************************************/ 
-int8_t SalidasClass::getAsociadaASecuenciador(int8_t id)
-  {
-  //validaciones previas
-  if(id <0 || id>=MAX_RELES) return NO_CONFIGURADO;
-      
-  return reles[id].getSecuenciador();  
-  }   
 /********************************************************** Fin salidas ******************************************************************/  
-  
+
 /****************************************** Funciones de estado ***************************************************************/
 /********************************************************/
 /*                                                      */
@@ -377,30 +264,47 @@ int8_t SalidasClass::getAsociadaASecuenciador(int8_t id)
    }
                                                         */
 /********************************************************/   
-String SalidasClass::generaJsonEstadoSalidas(void)
-  {
-  String salida="";
+String Salidas::generaJsonEstado(boolean filtro){
+  String cad="";
 
-  const size_t bufferSize = JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(1) + 2*JSON_OBJECT_SIZE(3);
+  //const size_t bufferSize = JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(1) + 2*JSON_OBJECT_SIZE(8);
+  const size_t bufferSize = JSON_ARRAY_SIZE(1) + JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(15);
+
   DynamicJsonBuffer jsonBuffer(bufferSize);
   
   JsonObject& root = jsonBuffer.createObject();
   
-  JsonArray& Salidas = root.createNestedArray("Salidas");
-  for(int8_t id=0;id<MAX_RELES;id++)
-    {
-    if(reles[id].getConfigurado()==CONFIGURADO)
-      {
-      JsonObject& Salidas_0 = Salidas.createNestedObject();
-      Salidas_0["id"] = id;
-      Salidas_0["nombre"] = reles[id].getNombre();
-      Salidas_0["valor"] = reles[id].getEstado();    
-      }
-    }
-    
-  root.printTo(salida);
-  return salida;  
-  }  
-/****************************************** Fin funciones de estado ***************************************************************/
+  JsonArray& Salidas = root.createNestedArray("salidas");
+  for(int8_t id=0;id<numeroSalidas;id++){
 
-SalidasClass Salidas;
+    JsonObject& Salidas_0 = Salidas.createNestedObject();
+    Salidas_0["id"] = id;
+    Salidas_0["nombre"] = salida[id].getNombre();
+    Salidas_0["pin"] = salida[id].getPin();
+    Salidas_0["modo"] = salida[id].getModoNombre();
+    Salidas_0["controlador"] = salida[id].getControlador();
+    Salidas_0["estado"] = salida[id].getEstado();
+    Salidas_0["nombreEstado"] = salida[id].getNombreEstadoActual();
+    Salidas_0["anchoPulso"] = salida[id].getAnchoPulso();
+    Salidas_0["finPulso"] = salida[id].getFinPulso();
+
+    if(!filtro){
+      Salidas_0["tipo"] = salida[id].getTipoNombre();
+      Salidas_0["valorPWM"] = salida[id].getValorPWM();
+      Salidas_0["mensajeEstado"] = salida[id].getMensajeEstadoActual();
+      Salidas_0["inicio"] = salida[id].getEstadoInicial();
+    }
+  }
+    
+  root.printTo(cad);
+  return cad;  
+}  
+String Salidas::generaJsonEstado(void) {return generaJsonEstado(true);}
+
+int8_t Salidas::setSalidaActiva(int8_t id){
+  if(id <0 || id>=salidas.getNumSalidas()) return NO_CONFIGURADO;
+  
+  salidaActiva=id;
+
+  return CONFIGURADO;
+}
