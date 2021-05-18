@@ -29,7 +29,7 @@
 
 //Variables globales
 AsyncWebServer serverX(PUERTO_WEBSERVER);
-
+fs::File fichero;
 //Cadenas HTML precargadas
 String miniCabecera="<html><head></head><body><link rel='stylesheet' type='text/css' href='css.css'>\n";
 String miniPie="</body></html>";
@@ -60,7 +60,7 @@ void handleRestart(AsyncWebServerRequest *request);
 
 void handleFicheros(AsyncWebServerRequest *request);
 void handleListaFicheros(AsyncWebServerRequest *request);
-void handleManageFichero(AsyncWebServerRequest *request);
+void handleEditaFichero(AsyncWebServerRequest *request);
 void handleLeeFichero(AsyncWebServerRequest *request);
 void handleBorraFichero(AsyncWebServerRequest *request);
 void handleCreaFichero(AsyncWebServerRequest *request);
@@ -69,6 +69,7 @@ void handleNotFound(AsyncWebServerRequest *request);
 bool handleFileRead(AsyncWebServerRequest *request);
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
 
+String getContentType(String filename);
 /*********************************** Inicializacion y configuracion *****************************************************************/
 void inicializaWebServer(void)
   {
@@ -92,13 +93,13 @@ void inicializaWebServer(void)
   serverX.on("/activaSecuenciador", HTTP__ANY, handleActivaSecuenciador);  //Servicio para activar el secuenciador
   serverX.on("/desactivaSecuenciador", HTTP__ANY, handleDesactivaSecuenciador);  //Servicio para desactivar el secuenciador
 
-  serverX.on("/listaFicheros", HTTP__GET, handleListaFicheros);  //URI de leer fichero
+  serverX.on("/ficheros", HTTP__ANY, handleFicheros);  //Devuelve la pagina estatica ficheros.html
+  serverX.on("/listaFicheros", HTTP__GET, handleListaFicheros);  //Devuleve la lista de los ficheros
+  serverX.on("/editaFichero", HTTP__GET, handleEditaFichero);  //Devuelve la pagina estatica editaFichero.html
+  serverX.on("/leeFichero", HTTP__GET, handleLeeFichero);  //Devuelve el contenido del fichero que se pasa como pàrametro nombre
   serverX.on("/creaFichero", HTTP__GET, handleCreaFichero);  //URI de crear fichero
   serverX.on("/borraFichero", HTTP__GET, handleBorraFichero);  //URI de borrar fichero
-  serverX.on("/leeFichero", HTTP__GET, handleLeeFichero);  //URI de leer fichero
-  serverX.on("/manageFichero", HTTP__GET, handleManageFichero);  //URI de leer fichero
-  serverX.on("/ficheros", HTTP__ANY, handleFicheros);  //URI de leer fichero 
-
+  
   serverX.on("/particiones", HTTP__GET, handleParticiones);  //URI de test
   serverX.on("/setNextBoot", HTTP__GET, handleSetNextBoot);
 
@@ -166,7 +167,7 @@ void handleEstadoEntradas(AsyncWebServerRequest *request)
 /*************************************************/  
 void handleEstadoSalidas(AsyncWebServerRequest *request)
   {
-  String cad=salidas.generaJsonEstado();
+  String cad=salidas.generaJsonEstado(false);
   
   request->send(200, "text/json", cad); 
   }  
@@ -434,34 +435,28 @@ void handleBorraFichero(AsyncWebServerRequest *request)
 /*  Lee un fichero a traves de una           */
 /*  peticion HTTP                            */ 
 /*  COPIADO DE ACTUADOR                      */
-/*********************************************/  
-void handleLeeFichero(AsyncWebServerRequest *request)
-  {
-  String cad="";
-  String nombreFichero="";
-  String contenido="";
-   
-  if(request->hasArg("nombre") ) //si existen esos argumentos
-    {
-    nombreFichero=request->arg("nombre");
+/*********************************************/
+void handleLeeFichero(AsyncWebServerRequest *request){
+  if(request->hasArg("nombre") ) {
+    String nombreFichero = request->arg("nombre");
+    String contentType = getContentType(nombreFichero);
 
-    if(SistemaFicherosSD.leeFichero(nombreFichero, contenido))
-      {
-      cad += "El fichero tiene un tama&ntilde;o de ";
-      cad += contenido.length();
-      cad += " bytes.<BR>";           
-      cad += "El contenido del fichero es:<BR>";
-      cad += "<textarea readonly=true cols=75 rows=20 name=\"contenido\">";
-      cad += contenido;
-      cad += "</textarea>";
-      cad += "<BR>";
-      }
-    else cad += "Error al abrir el fichero " + nombreFichero + "<BR>";   
-    }
-  else cad += "Falta el argumento <nombre de fichero>"; 
+    if(!nombreFichero.startsWith("/"))  nombreFichero = "/" + nombreFichero;
 
-  request->send(200, "text/html", cad); 
+    fichero=SD_MMC.open(nombreFichero,"r");
+    if(!fichero) request->send(404,"text/html", "Fichero no encontrado");
+
+    //request->send(fichero,  nombreFichero, contentType,false);
+    AsyncWebServerResponse *response=request->beginChunkedResponse(contentType, [&](uint8_t *buffer, size_t maxlen, size_t index)->size_t{
+      size_t salida=fichero.read(buffer,maxlen);
+
+      if(!salida) fichero.close();
+      return salida;
+    });
+
+    request->send(response);
   }
+}
 
 /*********************************************/
 /*                                           */
@@ -470,92 +465,20 @@ void handleLeeFichero(AsyncWebServerRequest *request)
 /*  peticion HTTP                            */ 
 /*  COPIADO DE ACTUADOR                      */
 /*********************************************/ 
-void handleManageFichero(AsyncWebServerRequest *request)
-  {
-  String nombreFichero="";
-  String contenido="";
-
+void handleEditaFichero(AsyncWebServerRequest *request){
+  if(request->hasArg("nombre") ) //si existen esos argumentos
+    {
+    request->redirect("editaFichero.html?nombre=" + request->arg("nombre"));
+    return;
+    }
+  
   AsyncResponseStream *response = request->beginResponseStream("text/html");   
-
-  if(request->hasArg("nombre") ) //si existen esos argumentos
-    {
-    nombreFichero=request->arg("nombre");
-        
-    response->printf(miniCabecera.c_str());
-
-    if(SistemaFicherosSD.leeFichero(nombreFichero, contenido))
-      {           
-      response->printf("<form id=\"borrarFichero\" action=\"/borraFichero\">\n");
-      response->printf("  <input type=\"hidden\" name=\"nombre\" value=\"%s\">\n",nombreFichero.c_str());
-      response->printf("</form>\n");
-
-      response->printf("<form id=\"salvarFichero\" action=\"creaFichero\" target=\"_self\">");
-      response->printf("  <input type=\"hidden\" name=\"nombre\" value=\"%s\">",nombreFichero.c_str());
-      response->printf("</form>\n");
-      
-      response->printf("<button type=\"button\" onclick=\"window.history.back()\">Atras</button>\n");
-      
-      response->printf("<div id=\"contenedor\" style=\"width:900px;\">\n");      
-      response->printf("  <p align=\"center\" style=\"margin-top: 0px;font-size: 16px; background-color: #83aec0; background-repeat: repeat-x; color: #FFFFFF; font-family: Trebuchet MS, Arial; text-transform: uppercase;\">Fichero: %s (%i)</p>\n",nombreFichero.c_str(),contenido.length());
-      response->printf("  <BR>\n");
-      response->printf("  <button form=\"salvarFichero\" style=\"float: left;\" type=\"submit\" value=\"Submit\">Salvar</button>\n");
-      response->printf("  <button form=\"borrarFichero\" style=\"float: right;\" type=\"submit\" value=\"Submit\">Borrar</button>\n");
-      response->printf("  <BR><BR>\n");
-      response->printf("  <textarea form=\"salvarFichero\" cols=120 rows=45 name=\"contenido\">");
-      response->printf(contenido.c_str());
-      response->printf("</textarea>\n");
-      response->printf("</div>\n");
-      }
-    else response->printf("Error al abrir el fichero %s <BR>",nombreFichero.c_str());
-    }
-  else response->printf("Falta el argumento <nombre de fichero>"); 
-
+  response->printf(miniCabecera.c_str());
+  response->printf("Falta el argumento <nombre de fichero>"); 
   response->printf(miniPie.c_str());
-  request->send(response); 
-  }
-/*
-void handleManageFichero(AsyncWebServerRequest *request)
-  {
-  String nombreFichero="";
-  String contenido="";
-  String cad=miniCabecera;
-   
-  if(request->hasArg("nombre") ) //si existen esos argumentos
-    {
-    nombreFichero=request->arg("nombre");
+  request->send(response);     
+}
 
-    if(SistemaFicherosSD.leeFichero(nombreFichero, contenido))
-      {           
-      //cad += "<link rel='stylesheet' type='text/css' href='css.css'>";
-      //cad += "<style> table{border-collapse: collapse;} th, td{border: 1px solid black; padding: 5px; text-align: left;}</style>";
-
-      cad += "<form id=\"borrarFichero\" action=\"/borraFichero\">\n";
-      cad += "  <input type=\"hidden\" name=\"nombre\" value=\"" + nombreFichero + "\">\n";
-      cad += "</form>\n";
-
-      cad += "<form id=\"salvarFichero\" action=\"creaFichero\" target=\"_self\">";
-      cad += "  <input type=\"hidden\" name=\"nombre\" value=\"" + nombreFichero + "\">";
-      cad += "</form>\n";
-      
-      cad += "<button type=\"button\" onclick=\"window.history.back()\">Atras</button>\n";
-      
-      cad += "<div id=\"contenedor\" style=\"width:900px;\">\n";      
-      cad += "  <p align=\"center\" style=\"margin-top: 0px;font-size: 16px; background-color: #83aec0; background-repeat: repeat-x; color: #FFFFFF; font-family: Trebuchet MS, Arial; text-transform: uppercase;\">Fichero: " + nombreFichero + "(" + contenido.length() + ")</p>\n";
-      cad += "  <BR>\n";
-      cad += "  <button form=\"salvarFichero\" style=\"float: left;\" type=\"submit\" value=\"Submit\">Salvar</button>\n";
-      cad += "  <button form=\"borrarFichero\" style=\"float: right;\" type=\"submit\" value=\"Submit\">Borrar</button>\n";
-      cad += "  <BR><BR>\n";
-      cad += "  <textarea form=\"salvarFichero\" cols=120 rows=45 name=\"contenido\">" + contenido + "</textarea>\n";
-      cad += "</div>\n";
-      }
-    else cad += "Error al abrir el fichero " + nombreFichero + "<BR>";
-    }
-  else cad += "Falta el argumento <nombre de fichero>"; 
-
-  cad += miniPie;
-  request->send(200, "text/html", cad); 
-  }
-*/
 /*********************************************/
 /*                                           */
 /*  Lista los ficheros en el sistema a       */
@@ -593,7 +516,7 @@ void handleNotFound(AsyncWebServerRequest *request)
   {
   if(!handleFileRead(request))
     {
-    Serial.printf("No se encontro el fichero en SPIFFS\n");  
+    Serial.printf("No se encontro el fichero en /SD/www\n");  
     String message = miniCabecera;
 
     message = "<h1>" + cacharro.getNombreDispositivo() + "<br></h1>";
@@ -636,6 +559,7 @@ String getContentType(String filename) { // determine the filetype of a given fi
   else if (filename.endsWith(".pdf")) return "application/x-pdf";
   else if (filename.endsWith(".zip")) return "application/x-zip";
   else if (filename.endsWith(".gz")) return "application/x-gzip";
+  else if (filename.endsWith(".json")) return "application/json";
   return "text/plain";
 }
 
@@ -650,7 +574,7 @@ bool handleFileRead(AsyncWebServerRequest *request)
   String path=request->url();
   Serial.println("handleFileRead: " + path);
   
-  if (!path.startsWith("/")) path += "/";
+  if (!path.startsWith("/")) path = "/" + path;
   path = "/www" + path; //busco los ficheros en el SPIFFS en la carpeta www
 
   String contentType = getContentType(path);             // Get the MIME type

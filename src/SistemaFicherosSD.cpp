@@ -189,8 +189,7 @@ void testFileIO(fs::FS &fs, const char * path)
 /* Inicializa el sistema de ficheros del modulo */
 /************************************************/
 boolean SistemaFicherosSDClass::inicializaFicheros(int debug)
-  {int i=1;
-    Serial.printf("Paso %i\n",i++);
+  {
   //inicializo el sistema de ficheros de la tarjeta SD
   if (!SD_MMC.begin(MONTAJE_SD))
     {
@@ -198,32 +197,27 @@ boolean SistemaFicherosSDClass::inicializaFicheros(int debug)
     return (false);
     }
 
-    Serial.printf("Paso %i\n",i++);
   uint8_t cardType = SD_MMC.cardType();
 
-    Serial.printf("Paso %i\n",i++);
   if(cardType == CARD_NONE)
     {
     Serial.println("Tarjeta SD_MMC no detectada");
     return false;
     }
 
-    Serial.printf("Paso %i\n",i++);
   Serial.print("Tipo de tarjeta SD_MMC: ");
   if(cardType == CARD_MMC) Serial.println("MMC");
   else if(cardType == CARD_SD) Serial.println("SDSC");
   else if(cardType == CARD_SDHC) Serial.println("SDHC");
   else Serial.println("DESCONOCIDO");
 
-    Serial.printf("Paso %i\n",i++);
   //uint64_t cardSize = SD_MMC.cardSize() / (1024 * 1024);
   //Serial.printf("Tamaño de la tarjeta SD_MMC: %lluMB\n", cardSize);
   Serial.printf("Tamaño total: %lluMB\n", SD_MMC.totalBytes() / (1024 * 1024));
   Serial.printf("Tamaño utilizado: %lluMB\n", SD_MMC.usedBytes() / (1024 * 1024));
 
-    Serial.printf("Paso %i\n",i++);
-  listDir(SD_MMC, "/", 2);
   /*
+  listDir(SD_MMC, "/", 2);
   createDir(SD_MMC, "/mydir");
   listDir(SD_MMC, "/", 0);
   removeDir(SD_MMC, "/mydir");
@@ -320,7 +314,7 @@ boolean SistemaFicherosSDClass::salvaFichero(String nombreFichero, String nombre
   Serial.println(nombreFichero.c_str());
   Serial.print("Contenido fichero: ");
   Serial.println(contenidoFichero.c_str());
-   
+
   File newFile = SD_MMC.open(nombreFichero.c_str(), FILE_WRITE);//abro el fichero, si existe lo borra
   if (newFile) 
     {

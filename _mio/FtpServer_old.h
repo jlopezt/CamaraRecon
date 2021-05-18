@@ -48,6 +48,7 @@
 /***************************** Includes *****************************/
 //#include <Global.h>
 //#include "Streaming.h"
+////#include "SD.h"
 #include <FS.h>
 #include <WiFiClient.h>
 /***************************** Includes *****************************/
@@ -60,7 +61,6 @@ class FtpServer
     boolean inicializaFTP(boolean debug);
 
   private:
-    public:    
     //funciones de configuracion
     boolean recuperaDatosFTP(boolean debug);
     boolean parseaConfiguracionFTP(String contenido);

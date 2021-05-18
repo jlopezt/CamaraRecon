@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <TITLE>Domoticae</TITLE>    
+    <link rel="stylesheet" type="text/css" href="css.css">
+    <!--<script type="text/javascript" src="./root.js"></script>-->
+    <script type="text/javascript">
+        function inicializa(nombreFichero){
+            console.log("Vamos...");
+
+            const queryString = window.location.search;
+            console.log(queryString);
+            
+            const urlParams = new URLSearchParams(queryString);
+            var nombreFichero="";
+            
+            if(urlParams.has("nombre")){
+                nombreFichero = urlParams.get('nombre');
+                console.log(nombreFichero);        
+
+                var xhfichero = new XMLHttpRequest();
+                xhfichero.onreadystatechange = function(){
+                    if (xhfichero.readyState == 4){
+                        if(xhfichero.status == 200) {
+                        console.log("fichero: " + xhfichero.responseText)
+                        document.getElementById("nombreFichero").innerHTML="Fichero: " + nombreFichero;
+                        document.getElementById("botonBorra").value=nombreFichero;
+                        document.getElementById("botonSalva").value=nombreFichero;
+                        document.getElementById("texto").innerHTML=xhfichero.responseText;
+                        }
+                    }
+                };
+                xhfichero.open("GET", "leeFichero?nombre=" + nombreFichero, true);
+                xhfichero.send(null);
+            }					
+        };
+    </script>
+  </head>
+
+  <BODY onload="inicializa()">
+    <form id="borrarFichero" action="/borraFichero">
+        <input id="botonBorra" type="hidden" name="nombre" value="">
+      </form>
+      
+      <form id="salvarFichero" action="/creaFichero" target="_self">
+        <input id="botonSalva" type="hidden" name="nombre" value="">
+      </form>
+      
+      <button type="button" onclick="window.history.back()">Atras</button>
+      
+      <div id="contenedor" style="width:900px;">      
+          <p id="nombreFichero" align="center" style="margin-top: 0px;font-size: 16px; background-color: #83aec0; background-repeat: repeat-x; color: #FFFFFF; font-family: Trebuchet MS, Arial; text-transform: uppercase;">Fichero:</p>
+          <BR>
+          <button form="salvarFichero" style="float: left;" type="submit" value="Submit">Salvar</button>
+          <button form="borrarFichero" style="float: right;" type="submit" value="Submit">Borrar</button>
+          <BR><BR>
+          <textarea id="texto" form="salvarFichero" cols=120 rows=45 name="contenido"></textarea>
+      </div>
+  </BODY>
+</HTML>

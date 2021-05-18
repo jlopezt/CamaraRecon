@@ -158,7 +158,7 @@ void loop()
   if ((cacharro.getVuelta() % FRECUENCIA_SALIDAS)==0) salidas.actualiza(debugGlobal); //comprueba las salidas
   //Prioridad 3: Interfaces externos de consulta    
   //if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_WEB)==0) webServer(debugGlobal); //atiende el servidor web
-  //if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_FTP)==0) ftpSrv.handleFTP(); //atiende el servidor ftp
+  if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_FTP)==0) ftpSrv.handleFTP(); //atiende el servidor ftp
   if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_WEBSOCKET)==0) atiendeWebsocket();
   if ((cacharro.getVuelta() % FRECUENCIA_MQTT)==0) miMQTT.atiendeMQTT(debugGlobal);      
   if ((cacharro.getVuelta() % FRECUENCIA_ENVIO_DATOS)==0) miMQTT.enviaDatos(debugGlobal); //publica via MQTT los datos de entradas y salidas, segun configuracion

@@ -71,7 +71,7 @@
 
 /***************************** Includes *****************************/
 #include <Arduino.h>
-#include <FtpServer.h>
+#include <ESP32FtpServer.h>
 //#include <SistemaFicheros.h>
 #include <SistemaFicherosSD.h>
 #include <ArduinoJson.h>

@@ -251,6 +251,9 @@ void FtpServer::disconnectClient()
 
 boolean FtpServer::userIdentity()
 {	
+  Serial.printf("Parametros: #%s#\n",parameters);
+  Serial.printf("Usuario: #%s#\n",_FTP_USER.c_str());
+
   if( strcmp( command, "USER" ))
     client.println( "500 Syntax error");
   if( strcmp( parameters, _FTP_USER.c_str() ))
@@ -267,6 +270,7 @@ boolean FtpServer::userIdentity()
 
 boolean FtpServer::userPassword()
 {
+  Serial.printf("Password: #%s#\n",_FTP_PASS.c_str());
   if( strcmp( command, "PASS" ))
     client.println( "500 Syntax error");
   else if( strcmp( parameters, _FTP_PASS.c_str() ))
@@ -290,7 +294,9 @@ boolean FtpServer::processCommand()
   //      ACCESS CONTROL COMMANDS      //
   //                                   //
   ///////////////////////////////////////
-
+  Serial.printf("FTP\nComandLine: %s\n", cmdLine);
+  Serial.printf("Comando: %s\n", command);
+  Serial.printf("Directotio actual: %s\n", cwdName);
   //
   //  CDUP - Change to Parent Directory 
   //
@@ -309,8 +315,7 @@ boolean FtpServer::processCommand()
     else 
       {       
         client.println( "250 Ok. Current directory is " + String(cwdName) );
-      }
-    
+      }  
   }
   //
   //  PWD - Print Directory
@@ -527,59 +532,49 @@ boolean FtpServer::processCommand()
     {
 	  client.println( "150 Accepted data connection");
       uint16_t nm = 0;
-#ifdef ESP8266
-      Dir dir= SD_MMC.openDir(cwdName);
-      char dtStr[ 15 ];
-    //  if(!SD_MMC.exists(cwdName))
-    //    client.println( "550 Can't open directory " +String(parameters)+ );
-    //  else
-      {
-        while( dir.next())
-		{
-			String fn,fs;
-			fn = dir.fileName();
-			fn.remove(0, 1);
-			fs = String(dir.fileSize());
-          data.println( "Type=file;Size=" + fs + ";"+"modify=20000101160656;" +" " + fn);
-          nm ++;
-        }
-        client.println( "226-options: -a -l");
-        client.println( "226 " + String(nm) + " matches total");
-      }
-#elif defined ESP32
+
 			File root = SD_MMC.open(cwdName);
-			// if(!root){
-			// 		client.println( "550 Can't open directory " + String(cwdName) );
-			// 		// return;
-			// } else {
+			if(!root){
+				client.println( "550 Can't open directory " + String(cwdName) );
+				// return;
+			} else {
 				// if(!root.isDirectory()){
 				// 		Serial.println("Not a directory");
 				// 		return;
 				// }
 
+        String cad="";
+        
+        if(strcmp("/",cwdName)){
+          //Directorio padre
+          cad="Type=pdir;Modify=19990112030508;Perm=el; ..";
+          data.println(cad); 
+          Serial.printf("MLSD: %s\n",cad.c_str());
+        }
+
+        //El propio directorio
+        cad="Type=cdir;modify=20000101160656;Perm=el; " + String(cwdName);
+        data.println(cad); 
+        Serial.printf("MLSD: %s\n",cad.c_str());
+        //Los ficheros y directorios incluidos
 				File file = root.openNextFile();
 				while(file){
-					// if(file.isDirectory()){
-					// 	data.println( "+r,s <DIR> " + String(file.name()));
-					// 	// Serial.print("  DIR : ");
-					// 	// Serial.println(file.name());
-					// 	// if(levels){
-					// 	// 	listDir(fs, file.name(), levels -1);
-					// 	// }
-					// } else {
-						String fn, fs;
-						fn = file.name();
-						fn.remove(0, 1);
-						fs = String(file.size());
-						data.println( "Type=file;Size=" + fs + ";"+"modify=20000101160656;" +" " + fn);
-						nm ++;
-					// }
+					String fn, fs;
+					fn = file.name();
+					fn.remove(0, 1);
+					fs = String(file.size());
+					nm ++;
+
+          if(file.isDirectory()) cad="Type=dir;modify=20000101160656;Perm=el; " + fn;
+          else  cad="Type=file;Size=" + fs + ";modify=20000101160656;Perm=rw;" + " " + fn;
+
+          Serial.printf("MLSD: %s\n",cad.c_str());
+          data.println(cad);
 					file = root.openNextFile();
 				}
 				client.println( "226-options: -a -l");
 				client.println( "226 " + String(nm) + " matches total");
 			// }
-#endif
       data.stop();
     }
   }
