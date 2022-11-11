@@ -85,6 +85,8 @@ class relojClass
   String getHora(void);
   String getFecha(void);
   String horaYfecha(time_t entrada);
+  String horaYfecha(struct tm* ts);
+  String horaYfechaArranque(void);
 };
 
 extern relojClass reloj;

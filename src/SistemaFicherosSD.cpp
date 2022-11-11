@@ -15,6 +15,10 @@
 #include "SD_MMC.h" // SD Card ESP32-CAM
 /***************************** Includes *****************************/
 
+#ifdef SISTEMA_FICHEROS_SD
+  SistemaFicherosSDClass SistemaFicheros;
+#endif
+
 /***************************** Funciones de soporte *******************************/
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels)
   {
@@ -354,32 +358,6 @@ boolean SistemaFicherosSDClass::borraFichero(String nombreFichero)
   }  
 
 /************************************************/
-/* Recupera los ficheros almacenados en el      */
-/* dispositivo. Devuelve una cadena separada    */
-/* por SEPARADOR                                */
-/************************************************/
-boolean SistemaFicherosSDClass::listaFicheros(String &contenido)
-  {   
-  contenido="";
-
-  File root = SD_MMC.open("/");
-  File file = root.openNextFile();
- 
-  while(file)
-    {
-    Serial.print("FILE: ");
-    Serial.println(file.name());
-
-    contenido += String(file.name());
-    contenido += SEPARADOR;
-      
-    file = root.openNextFile();
-    }
-    
-  return (true);
-  }  
-
-/************************************************/
 /* Devuelve si existe o no un fichero en el     */
 /* dispositivo                                  */
 /************************************************/
@@ -480,10 +458,6 @@ uint16_t SistemaFicherosSDClass::tamanoFichero(String nombreFichero)
   return -1;
   }
 
-//Declaro la instancia unica
-SistemaFicherosSDClass SistemaFicherosSD; 
-
-
 /************************************************/
 /* Devuelve el nombre del direcotrio del        */
 /* fichro que se pasa como parametro            */
@@ -506,6 +480,32 @@ boolean SistemaFicherosSDClass::esDirectorio(String nombre)
   if(nombre.indexOf("/")!=-1) return true;
   return false;
   }
+
+/************************************************/
+/* Recupera los ficheros almacenados en el      */
+/* dispositivo. Devuelve una cadena separada    */
+/* por SEPARADOR                                */
+/************************************************/
+boolean SistemaFicherosSDClass::listaFicheros(String &contenido)
+  {   
+  contenido="";
+
+  File root = SD_MMC.open("/");
+  File file = root.openNextFile();
+ 
+  while(file)
+    {
+    Serial.print("FILE: ");
+    Serial.println(file.name());
+
+    contenido += String(file.name());
+    contenido += SEPARADOR;
+      
+    file = root.openNextFile();
+    }
+    
+  return (true);
+  }  
 
 /************************************************/
 /* Recupera los ficheros almacenados en el      */

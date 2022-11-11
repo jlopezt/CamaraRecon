@@ -2,7 +2,29 @@
  *    Modulo de gestion de SNTP
  * 
  *    https://github.com/espressif/arduino-esp32/issues/680
+ * 
+ * 
  ***********************************************************/
+
+/***************************** Defines *****************************/
+#define MES_CAMBIO_HORARIO_UP   3 //marzo
+#define MES_CAMBIO_HORARIO_DOWN 10 //octubre
+#define DOMINGO 7
+/***************************** Defines *****************************/
+
+/***************************** Includes *****************************/
+#include <Global.h>
+#include <SNTP.h>
+
+//#include <TimeLib.h>  // download from: http://www.arduino.cc/playground/Code/Time
+#include <Time.h>
+/***************************** Includes *****************************/
+
+String Semana[7]={"Lunes","Martes","Miercoles","Jueves","Viernes","Sabado","Domingo"};
+
+const char* NTP_SERVER = "pool.ntp.org";//"ntp.mydomain.com";
+//const char* TZ_INFO    = "EST5EDT4,M3.2.0/02:00:00,M11.1.0/02:00:00";
+const char* TZ_INFO    = "CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/02:00:00";
 /*****************************************************
 The format of TZ values recognized by tzset() is as follows:
 stdoffset[dst[offset][,rule]]copy to clipboard
@@ -39,21 +61,21 @@ If dst is specified and rule is not specified by TZ or in LC_TOD category, the d
 date is M10.5.0.
 ******************************************************/
 
-/***************************** Defines *****************************/
-#define MES_CAMBIO_HORARIO_UP   3 //marzo
-#define MES_CAMBIO_HORARIO_DOWN 10 //octubre
-#define DOMINGO 7
-/***************************** Defines *****************************/
 
-/***************************** Includes *****************************/
-#include <Global.h>
-#include <SNTP.h>
-#include <TimeLib.h>  // download from: http://www.arduino.cc/playground/Code/Time
-#include <Time.h>
-/***************************** Includes *****************************/
-
-String Semana[7]={"Lunes","Martes","Miercoles","Jueves","Viernes","Sabado","Domingo"};
-
+struct tm timeinfo;
+/***********************
+Member  Type  Meaning Range
+tm_sec  int seconds after the minute  0-61*
+tm_min  int minutes after the hour  0-59
+tm_hour int hours since midnight  0-23
+tm_mday int day of the month  1-31
+tm_mon  int months since January  0-11
+tm_year int years since 1900  
+tm_wday int days since Sunday 0-6
+tm_yday int days since January 1  0-365
+tm_isdst int Daylight Saving Time flag 
+***********************/
+struct tm uptime;
 /****************************************************/
 /*                                                  */
 /*       Constructor de la clase reloj              */ 
@@ -73,10 +95,22 @@ void relojClass::inicializaReloj(void)
   if (getLocalTime(&timeinfo, 10000))  // wait up to 10sec to sync
     {
     Serial.println(&timeinfo, "Time set: %B %d %Y %H:%M:%S (%A)");
+    uptime.tm_sec=timeinfo.tm_sec;
+    uptime.tm_min=timeinfo.tm_min;
+    uptime.tm_hour=timeinfo.tm_hour;
+    uptime.tm_mday=timeinfo.tm_mday;
+    uptime.tm_mon=timeinfo.tm_mon;
+    uptime.tm_year=timeinfo.tm_year;    
     } 
   else 
     {
     Serial.println("No se pudo inicializar el reloj por SNTP");
+    uptime.tm_sec=0;
+    uptime.tm_min=0;
+    uptime.tm_hour=0;
+    uptime.tm_mday=0;
+    uptime.tm_mon=0;
+    uptime.tm_year=0;    
     }    
   }
   
@@ -254,6 +288,7 @@ String relojClass::getFecha(void)
 /*  a partir de la estrucutura time_t que se le pasa           */
 /*                                                             */
 /***************************************************************/
+/*
 String relojClass::horaYfecha(time_t entrada)
   {
   String cad="";  
@@ -267,5 +302,20 @@ String relojClass::horaYfecha(time_t entrada)
 
   return (String(buf));    
   }
+*/
+String relojClass::horaYfecha(time_t entrada){return horaYfecha(localtime(&entrada));}
+String relojClass::horaYfecha(struct tm* ts)
+  {
+  String cad="";  
+  const char formato[]="%d-%m-%Y %H:%M:%S";
+  const uint8_t longitud=20;
+  char buf[longitud];
 
+  strftime(buf, sizeof(buf), formato, ts);
+  buf[longitud-1]=0;
+
+  return (String(buf));    
+  }
+
+String relojClass::horaYfechaArranque(void){return horaYfecha(&uptime);}
 relojClass reloj;

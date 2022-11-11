@@ -51,13 +51,12 @@ boolean Entradas::recuperaDatos(int debug){
 
   if (debug) Serial.printf("Recupero configuracion de archivo...\n");
 
-  if(!SistemaFicherosSD.leeFichero(ENTRADAS_CONFIG_FILE_SD, cad)){
-    //Confgiguracion por defecto
+  if(!SistemaFicheros.leeFichero(ENTRADAS_CONFIG_FILE, cad)){  
+    //Configuracion por defecto
     Serial.printf("No existe fichero de configuracion de Entradas\n");    
     cad="{\"Entradas\": []}";
-    //salvo la config por defecto
-    //if(salvaFichero(ENTRADAS_CONFIG_FILE, ENTRADAS_CONFIG_BAK_FILE, cad)) Serial.printf("Fichero de configuracion de Entradas creado por defecto\n");
-  }
+    }
+
   return parseaConfiguracion(cad);
 }
 

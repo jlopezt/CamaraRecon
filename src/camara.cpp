@@ -10,6 +10,7 @@
 //#define CAMERA_MODEL_ESP_EYE
 //#define CAMERA_MODEL_M5STACK_PSRAM
 //#define CAMERA_MODEL_M5STACK_WIDE
+//#define CAMERA_MODEL_TTGO_TCAMERA 
 #define CAMERA_MODEL_AI_THINKER
 /***************************** Defines *****************************/
 

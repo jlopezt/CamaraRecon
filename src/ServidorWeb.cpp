@@ -46,13 +46,13 @@ void handleConfigEntradas(AsyncWebServerRequest *request);
 void handleSalidas(AsyncWebServerRequest *request);
 void handleEstadoSalidas(AsyncWebServerRequest *request);
 void handleConfigSalidas(AsyncWebServerRequest *request);
-
+/*
 void handleSecuenciador(AsyncWebServerRequest *request);
 void handleDesactivaSecuenciador(AsyncWebServerRequest *request);
 void handleActivaSecuenciador(AsyncWebServerRequest *request);
 void handleEstadoSecuenciador(AsyncWebServerRequest *request);
 void handleConfigSecuenciador(AsyncWebServerRequest *request);
-
+*/
 void handleParticiones(AsyncWebServerRequest *request);
 void handleSetNextBoot(AsyncWebServerRequest *request);
 void handleInfo(AsyncWebServerRequest *request);
@@ -86,13 +86,13 @@ void inicializaWebServer(void)
   serverX.on("/configSalidas", HTTP__GET, handleConfigSalidas); //Servicio de estdo de reles
   serverX.on("/entradas", HTTP__GET, handleEntradas); //Servicio de estdo de reles      
   serverX.on("/configEntradas", HTTP__GET, handleConfigEntradas); //Servicio de estdo de reles
-  
+  /*
   serverX.on("/secuenciador", HTTP__GET, handleSecuenciador); //Servicio de estdo de reles
   serverX.on("/configSecuenciador", HTTP__GET, handleConfigSecuenciador); //Servicio de estdo de reles
   serverX.on("/estadoSecuenciador", HTTP__ANY, handleEstadoSecuenciador);  //Serivico de estado del secuenciador
   serverX.on("/activaSecuenciador", HTTP__ANY, handleActivaSecuenciador);  //Servicio para activar el secuenciador
   serverX.on("/desactivaSecuenciador", HTTP__ANY, handleDesactivaSecuenciador);  //Servicio para desactivar el secuenciador
-
+  */
   serverX.on("/ficheros", HTTP__ANY, handleFicheros);  //Devuelve la pagina estatica ficheros.html
   serverX.on("/listaFicheros", HTTP__GET, handleListaFicheros);  //Devuleve la lista de los ficheros
   serverX.on("/editaFichero", HTTP__GET, handleEditaFichero);  //Devuelve la pagina estatica editaFichero.html
@@ -248,7 +248,9 @@ void handleEntradas(AsyncWebServerRequest *request) {request->redirect("entradas
 /*   Servicio de representacion de los datos del secuenciador   */
 /*                                                              */
 /****************************************************************/
+/*
 void handleSecuenciador(AsyncWebServerRequest *request){request->redirect("secuenciador.html");}
+*/
 
 /*********************************************************/
 /*                                                       */
@@ -256,11 +258,13 @@ void handleSecuenciador(AsyncWebServerRequest *request){request->redirect("secue
 /*                                                       */
 /*********************************************************/
 //estadoSecuenciador
+/*
 void handleEstadoSecuenciador(AsyncWebServerRequest *request){
     String cad=secuenciador.generaJsonEstado();
 
     request->send(200, "text/json", cad);
 }
+*/
 
 /*********************************************************/
 /*                                                       */
@@ -268,29 +272,35 @@ void handleEstadoSecuenciador(AsyncWebServerRequest *request){
 /*  del secuenciador                                     */
 /*                                                       */
 /*********************************************************/
+/*
 void handleConfigSecuenciador(AsyncWebServerRequest *request){
      request->send(SPIFFS, "/SecuenciadorConfig.json", "text/json");
 }
+*/
+
 /*********************************************/
 /*                                           */
 /*  Servicio para activar el secuenciador    */
 /*                                           */
 /*********************************************/  
+/*
 void handleActivaSecuenciador(AsyncWebServerRequest *request){
   secuenciador.activar();
   handleRoot(request);
 }
+*/
 
 /*********************************************/
 /*                                           */
 /*  Servicio para desactivar el secuenciador */
 /*                                           */
 /*********************************************/  
+/*
 void handleDesactivaSecuenciador(AsyncWebServerRequest *request){
   secuenciador.desactivar();
   handleRoot(request);
 }
-
+*/
 
 /****************************FIN SECUENCIADOR******************************************/
 
@@ -388,9 +398,9 @@ void handleCreaFichero(AsyncWebServerRequest *request)
     nombreFichero=request->arg("nombre");
     contenidoFichero=request->arg("contenido");
 
-    if(SistemaFicherosSD.salvaFichero( nombreFichero, nombreFichero+".bak", contenidoFichero)) 
+    if(SistemaFicheros.salvaFichero( nombreFichero, nombreFichero+".bak", contenidoFichero)) 
 	    {
-      String cad=SistemaFicherosSD.directorioFichero(nombreFichero);
+      String cad=SistemaFicheros.directorioFichero(nombreFichero);
       request->redirect("ficheros?dir=" + cad);
       return;
 	    }  
@@ -417,9 +427,9 @@ void handleBorraFichero(AsyncWebServerRequest *request)
     {
     nombreFichero=request->arg("nombre");
 
-    if(SistemaFicherosSD.borraFichero(nombreFichero)) 
+    if(SistemaFicheros.borraFichero(nombreFichero)) 
       {
-      String cad=SistemaFicherosSD.directorioFichero(nombreFichero);
+      String cad=SistemaFicheros.directorioFichero(nombreFichero);
       request->redirect("ficheros?dir=" + cad);
       return;
       }
@@ -491,7 +501,7 @@ void handleListaFicheros(AsyncWebServerRequest *request)
 
   if(request->hasArg("dir")) prefix=request->arg("dir");
 
-  request->send(200,"text/json",SistemaFicherosSD.listadoFicheros(prefix));
+  request->send(200,"text/json",SistemaFicheros.listadoFicheros(prefix));
   }
 
 /*  COPIADO DE ACTUADOR                      */
@@ -547,7 +557,7 @@ void handleNotFound(AsyncWebServerRequest *request)
 /*****************************************************/
 String getContentType(String filename) { // determine the filetype of a given filename, based on the extension
   //if (request->hasArg("download")) return "application/octet-stream";
-   if (filename.endsWith(".htm")) return "text/html";
+  if (filename.endsWith(".htm")) return "text/html";
   else if (filename.endsWith(".html")) return "text/html";
   else if (filename.endsWith(".css")) return "text/css";
   else if (filename.endsWith(".js")) return "application/javascript";
@@ -580,9 +590,9 @@ bool handleFileRead(AsyncWebServerRequest *request)
   String contentType = getContentType(path);             // Get the MIME type
   String pathWithGz = path + ".gz";
   
-  if(SistemaFicherosSD.existeFichero(pathWithGz) || SistemaFicherosSD.existeFichero(path))
+  if(SistemaFicheros.existeFichero(pathWithGz) || SistemaFicheros.existeFichero(path))
     { // If the file exists, either as a compressed archive, or normal
-    if (SistemaFicherosSD.existeFichero(pathWithGz)) path += ".gz";  // If there's a compressed version available, use the compressed verion
+    if (SistemaFicheros.existeFichero(pathWithGz)) path += ".gz";  // If there's a compressed version available, use the compressed verion
 
     fs::File fichero=SD_MMC.open(path,"r");
     request->send(fichero, path, contentType,false);

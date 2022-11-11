@@ -40,6 +40,8 @@ class SistemaFicherosSDClass
     String listadoFicheros(String prefix);
   };
 
-extern SistemaFicherosSDClass SistemaFicherosSD;
+#ifdef SISTEMA_FICHEROS_SD
+  extern SistemaFicherosSDClass SistemaFicheros;
+#endif
 
 #endif

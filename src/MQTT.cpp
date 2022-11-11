@@ -54,7 +54,7 @@ void miMQTTClass::inicializaMQTT(void)
     Serial.printf("Modo de conexion: %s\n", modoMQTT.c_str());
     
     //Leo el fichero con el certificado de CA
-    if(!SistemaFicherosSD.leeFichero(DIR_CA_CERT,caCert)) Serial.printf("No se pudo leer el certificado CA\n");
+    if(!SistemaFicheros.leeFichero(DIR_CA_CERT,caCert)) Serial.printf("No se pudo leer el certificado CA\n");
     //else Serial.printf("Certificado CA:\n%s\n",caCert.c_str());
 
     /* set SSL/TLS certificate */
@@ -99,12 +99,10 @@ boolean miMQTTClass::recuperaDatosMQTT(boolean debug)
   publicarEntradas=1; 
   publicarSalidas=1;    
 
-  if(!SistemaFicherosSD.leeFichero(MQTT_CONFIG_FILE_SD, cad)) {
-    //if(!SistemaFicheros.leeFichero(MQTT_CONFIG_FILE, cad)) {
-      //Confgiguracion por defecto
-      Serial.printf("No existe fichero de configuracion MQTT\n");
-      return false;
-      //}
+   if(!SistemaFicheros.leeFichero(MQTT_CONFIG_FILE, cad)) {
+    //Confgiguracion por defecto
+    Serial.printf("No existe fichero de configuracion MQTT\n");
+    return false;
     }
 
   return parseaConfiguracionMQTT(cad);

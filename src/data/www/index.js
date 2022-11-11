@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
   var baseHost = document.location.origin;
   var streamUrl = baseHost + ":81";
   //const WS_URL = "ws://" + window.location.host + ":88";
-  const WS_URL = "wss://domoticae.lopeztola.com/camaraws/";
+  const WS_URL = "wss://jlopezt:88716@domoticae.lopeztola.com/camaraws/";
   var ws;// = new WebSocket(WS_URL);
 
   const home = document.getElementById("button-home"); //boton de home

@@ -90,15 +90,15 @@ boolean Salidas::recuperaDatos(int debug){
   String cad="";
 
   if (debug) Serial.printf("Recupero configuracion de archivo...\n");
-  
-  if(!SistemaFicherosSD.leeFichero(SALIDAS_CONFIG_FILE_SD, cad)){
+
+  if(!SistemaFicheros.leeFichero(SALIDAS_CONFIG_FILE, cad)){
     //Confgiguracion por defecto
     Serial.printf("No existe fichero de configuracion de Salidas\n");    
     cad="{\"Salidas\": []}";
     //salvo la config por defecto
     //if(salvaFichero(SALIDAS_CONFIG_FILE, SALIDAS_CONFIG_BAK_FILE, cad)) Serial.printf("Fichero de configuracion de Salidas creado por defecto\n");
   }
-    
+
   return parseaConfiguracion(cad);
 }
 

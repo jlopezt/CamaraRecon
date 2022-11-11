@@ -41,14 +41,14 @@ void miSaveConfigCallback(void)
   Serial.print("Password : ");
   Serial.println(WiFi.psk());   
 
-  if(!SistemaFicherosSD.leeFichero(WIFI_CONFIG_FILE_SD, cad)) {
+  if(!SistemaFicheros.leeFichero(WIFI_CONFIG_FILE, cad)) {
       //if(!SistemaFicheros.leeFichero(WIFI_CONFIG_FILE, cad)) {
       Serial.println("No se pudo leer el fichero");
       //}
   }
   cad=RedWifi.generaJsonConfiguracionWifi(cad, WiFi.SSID(),WiFi.psk());
   
-  if(!SistemaFicherosSD.salvaFichero(WIFI_CONFIG_FILE_SD, WIFI_CONFIG_BAK_FILE_SD, cad)) {
+  if(!SistemaFicheros.salvaFichero(WIFI_CONFIG_FILE, WIFI_CONFIG_BAK_FILE, cad)) {
     //if(!SistemaFicheros.salvaFichero(WIFI_CONFIG_FILE, WIFI_CONFIG_BAK_FILE, cad)) {
       Serial.println("No se pudo salvar el fichero");  
     //}
@@ -66,13 +66,11 @@ void miSaveConfigCallback(void)
 boolean RedWifiClass::recuperaDatosWiFi(boolean debug) {
   String cad="";
   if (debug) Serial.println("Recupero configuracion de archivo...");
-   
-  if(!SistemaFicherosSD.leeFichero(WIFI_CONFIG_FILE_SD, cad)) {
-    //if(!SistemaFicheros.leeFichero(WIFI_CONFIG_FILE, cad)) {
-      //Confgiguracion por defecto
-      Serial.printf("No existe fichero de configuracion WiFi\n");
-      return false;
-    //}
+
+  if(!SistemaFicheros.leeFichero(WIFI_CONFIG_FILE, cad)) {
+    //Confgiguracion por defecto
+    Serial.printf("No existe fichero de configuracion WiFi\n");
+    return false;
   }
 
   return(parseaConfiguracionWifi(cad));

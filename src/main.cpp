@@ -71,7 +71,7 @@ void setup()
 */
   Serial.printf("\n\nInit Ficheros SD-------------------------------------------------------------------\n");
   //Ficheros - Lo primero para poder leer los demas ficheros de configuracion
-  if(!SistemaFicherosSD.inicializaFicheros(debugGlobal))Serial.println("Error al inicializar el sistema de ficheros SD");
+  if(!SistemaFicheros.inicializaFicheros(debugGlobal))Serial.println("Error al inicializar el sistema de ficheros SD");
 
   //Configuracion general
   Serial.printf("\n\nInit General --------------------------------------------------------------------------\n");
@@ -97,8 +97,10 @@ void setup()
     Serial.println("\n\nInit Web ----------------------------------------------------------------------------\n");
     inicializaWebServer();
     //FTPServer
+    /*
     Serial.println("\n\nInit FTP ----------------------------------------------------------------------------\n");
     ftpSrv.inicializaFTP(0);
+    */
     }
   else Serial.println("No se pudo conectar al WiFi");
   cacharro.parpadeaLed(1);
@@ -158,7 +160,7 @@ void loop()
   if ((cacharro.getVuelta() % FRECUENCIA_SALIDAS)==0) salidas.actualiza(debugGlobal); //comprueba las salidas
   //Prioridad 3: Interfaces externos de consulta    
   //if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_WEB)==0) webServer(debugGlobal); //atiende el servidor web
-  if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_FTP)==0) ftpSrv.handleFTP(); //atiende el servidor ftp
+  //if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_FTP)==0) ftpSrv.handleFTP(); //atiende el servidor ftp
   if ((cacharro.getVuelta() % FRECUENCIA_SERVIDOR_WEBSOCKET)==0) atiendeWebsocket();
   if ((cacharro.getVuelta() % FRECUENCIA_MQTT)==0) miMQTT.atiendeMQTT(debugGlobal);      
   if ((cacharro.getVuelta() % FRECUENCIA_ENVIO_DATOS)==0) miMQTT.enviaDatos(debugGlobal); //publica via MQTT los datos de entradas y salidas, segun configuracion

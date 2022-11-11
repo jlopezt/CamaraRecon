@@ -205,14 +205,12 @@ boolean recuperaDatosCaras(boolean debug)
   String cad="";
 
   if (debug) Serial.println("Recupero configuracion de archivo...");
-  
-  if(!SistemaFicherosSD.leeFichero(FACE_RECON_CONFIG_FILE_SD, cad)) {
-    //if(!SistemaFicheros.leeFichero(FACE_RECON_CONFIG_FILE, cad)) {
-      //Confgiguracion por defecto
-      Serial.printf("No existe fichero de configuracion de Caras\n");
-      return false; 
-      //}      
-  }
+
+  if(!SistemaFicheros.leeFichero(FACE_RECON_CONFIG_FILE, cad)) {
+    //Configuracion por defecto
+    Serial.printf("No existe fichero de configuracion de Caras\n");
+    return false; 
+    }
 
   return parseaConfiguracionCaras(cad);
   }
@@ -325,7 +323,7 @@ boolean parseaConfiguracionCaras(String contenido)
     new_node->id_vec->stride=cara["stride"];//doy valor a stride
     new_node->id_vec->item=(fptp_t *)malloc(FACE_ID_SIZE * sizeof(float));
     //SistemaFicheros.leeFicheroBin(String("/")+String(new_node->id_name)+String(".bin"),(uint8_t *)new_node->id_vec->item,0,(uint16_t)(FACE_ID_SIZE * sizeof(float)));//doy valor a item
-    SistemaFicherosSD.leeFicheroBin(String("/caras/")+String(new_node->id_name)+String(".bin"),(uint8_t *)new_node->id_vec->item,0,(uint16_t)(FACE_ID_SIZE * sizeof(float)));//doy valor a item
+    SistemaFicheros.leeFicheroBin(String("/caras/")+String(new_node->id_name)+String(".bin"),(uint8_t *)new_node->id_vec->item,0,(uint16_t)(FACE_ID_SIZE * sizeof(float)));//doy valor a item
 
     //Enlazo el nodo a la lista
     if (NULL == st_face_list.head)
@@ -437,7 +435,7 @@ boolean salvar_lista_face_id_a_fichero(face_id_name_list *lista, String ficheroC
     //String nombreFicheroBin=String("/")+String(cara->id_name)+String(".bin");
     //SistemaFicheros.salvaFicheroBin(nombreFicheroBin,nombreFicheroBin+String(".bak"),(uint8_t *)matrix->item,FACE_ID_SIZE * (uint16_t)sizeof(float));
     String nombreFicheroBin=String("/caras/")+String(cara->id_name)+String(".bin");
-    SistemaFicherosSD.salvaFicheroBin(nombreFicheroBin,nombreFicheroBin+String(".bak"),(uint8_t *)matrix->item,FACE_ID_SIZE * (uint16_t)sizeof(float));
+    SistemaFicheros.salvaFicheroBin(nombreFicheroBin,nombreFicheroBin+String(".bak"),(uint8_t *)matrix->item,FACE_ID_SIZE * (uint16_t)sizeof(float));
 
     cara = cara->next;//paso a la siguiente cara de la lista
     }
@@ -447,7 +445,7 @@ boolean salvar_lista_face_id_a_fichero(face_id_name_list *lista, String ficheroC
   //Salvo el fichero de configuracion
   String cad;
   root.printTo(cad);
-  if(!SistemaFicherosSD.salvaFichero(ficheroConfig,ficheroConfigBak,cad)) return false;
+  if(!SistemaFicheros.salvaFichero(ficheroConfig,ficheroConfigBak,cad)) return false;
 
   return true;
 }  
